@@ -1,7 +1,26 @@
 #include <algorithm>
 #include <cassert>
 
+#include "tools.h"
 #include "regxstring_impl.h"
+
+#if _DZ_DEBUG
+#   include <iostream>
+
+static void printRefs(std::ostringstream & oss,const __Refs & refs)
+{
+    for(__Refs::const_iterator i = refs.begin();i != refs.end();++i)
+        std::cout<<"\t"<<oss.str().substr(i->first,i->second);
+}
+
+#   define _OSS_OUT(msg) {  \
+        std::cout<<msg<<" : "<<oss.str(); \
+        printRefs(oss,refs);    \
+        std::cout<<std::endl;}
+
+#else
+#   define _OSS_OUT(str)
+#endif
 
 static const char * const SEP = "  ";
 
@@ -17,9 +36,9 @@ static std::string sep(int lvl)
 __NodeBase::~__NodeBase()
 {}
 
-bool __NodeBase::CanRepeat(int ch)
+int __NodeBase::Repeat(int ch)
 {
-    return true;
+    return 1;
 }
 
 void __NodeBase::AppendNode(__NodeBase * node)
@@ -38,7 +57,9 @@ __Edge::__Edge(int ch)
 }
 
 void __Edge::RandString(std::ostringstream & oss,__Refs & refs) const
-{}
+{
+    _OSS_OUT("__Edge");
+}
 
 void __Edge::Debug(std::ostream & out,int lvl) const
 {
@@ -53,6 +74,7 @@ __Text::__Text(int ch)
 void __Text::RandString(std::ostringstream & oss,__Refs & refs) const
 {
     oss<<str_;
+    _OSS_OUT("__Text");
 }
 
 void __Text::Debug(std::ostream & out,int lvl) const
@@ -75,6 +97,7 @@ void __Charset::RandString(std::ostringstream & oss,__Refs & refs) const
     assert(inc_);
     if(!str_.empty())
         oss<<str_[rand() % str_.size()];
+    _OSS_OUT("__Charset");
 }
 
 void __Charset::Debug(std::ostream & out,int lvl) const
@@ -175,12 +198,14 @@ __Repeat::~__Repeat(){
 
 void __Repeat::RandString(std::ostringstream & oss,__Refs & refs) const
 {
-    const int INF_MAX = 5;
-    assert(0 <= min_ && (INFINITE == max_ || min_ <= max_) && node_);
+    const int INF_MAX = 2;
+    int m = (min_ >= 0 ? min_ : -min_);
+    assert(0 <= m && (INFINITE == max_ || m <= max_) && node_);
     int t = (max_ == INFINITE ? INF_MAX : max_);
-    t = min_ + rand() % (t - min_ + 1);
+    t = m + rand() % (t - m + 1);
     while(t-- > 0)
         node_->RandString(oss,refs);
+    _OSS_OUT("__Repeat");
 }
 
 void __Repeat::Debug(std::ostream & out,int lvl) const
@@ -198,9 +223,9 @@ void __Repeat::Debug(std::ostream & out,int lvl) const
         out<<sep(lvl)<<"NULL\n";
 }
 
-bool __Repeat::CanRepeat(int ch)
+int __Repeat::Repeat(int ch)
 {
-    return false;
+    return (Tools::IsNonGreedy(ch) && min_ >= 0 ? 2 : 0);
 }
 
 //class __Seq
@@ -218,6 +243,7 @@ void __Seq::RandString(std::ostringstream & oss,__Refs & refs) const
 {
     for(__Con::const_iterator i = seq_.begin(),e = seq_.end();i != e;++i)
         (*i)->RandString(oss,refs);
+    _OSS_OUT("__Seq");
 }
 
 void __Seq::Debug(std::ostream & out,int lvl) const
@@ -250,7 +276,10 @@ void __Seq::AppendNode(__NodeBase * node)
 __Group::__Group(__NodeBase * node,int mark)
     : node_(node)
     , mark_(mark)
-{}
+{
+    if(!Tools::IsSubexpMark(mark_))
+        mark_ += SIGN;
+}
 
 __Group::~__Group()
 {
@@ -264,15 +293,22 @@ void __Group::RandString(std::ostringstream & oss,__Refs & refs) const
         switch(mark_){
             case '!':break;
             case ':':
-            case '=':node_->RandString(oss,refs);break;
+            case '=':
+            case '>':node_->RandString(oss,refs);break;
             default:{
-                size_t begin = oss.str().size();
-                refs.push_back(std::make_pair(begin,std::string::npos));
+                int i = mark_ - SIGN - 1;
+                assert(0 <= i && i < MAX_GROUPS);
+                if(size_t(i) >= refs.size())
+                    refs.resize(i + 1);
+                __Refs::reference ref = refs[i];
+                ref.first = oss.str().size();
+                ref.second = std::string::npos;
                 node_->RandString(oss,refs);
-                refs.back().second = oss.str().size() - begin;
+                ref.second = oss.str().size() - ref.first;
             }
         }
     }
+    _OSS_OUT("__Group");
 }
 
 void __Group::Debug(std::ostream & out,int lvl) const
@@ -282,6 +318,7 @@ void __Group::Debug(std::ostream & out,int lvl) const
         case ':':out<<"?:";break;
         case '=':out<<"?=";break;
         case '!':out<<"?!";break;
+        case '>':out<<"?>";break;
         default:out<<mark_;
     }
     out<<")\n";
@@ -311,6 +348,7 @@ void __Select::RandString(std::ostringstream & oss,__Refs & refs) const
         if(n)
             n->RandString(oss,refs);
     }
+    _OSS_OUT("__Ref");
 }
 
 void __Select::Debug(std::ostream & out,int lvl) const
@@ -345,6 +383,7 @@ void __Ref::RandString(std::ostringstream & oss,__Refs & refs) const
         if(ref.first < str.size())
             oss<<str.substr(ref.first,ref.second);
     }
+    _OSS_OUT("__Ref("<<index_<<")");
 }
 
 void __Ref::Debug(std::ostream & out,int lvl) const

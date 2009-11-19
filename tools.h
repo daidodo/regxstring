@@ -9,6 +9,10 @@ namespace Tools{
         return ch == '?' || ch == '+' || ch == '*';
     }
 
+    inline bool IsNonGreedy(int ch){
+        return ch == '?';
+    }
+
     inline bool IsBegin(int ch){
         return ch == '^';
     }
@@ -69,10 +73,12 @@ namespace Tools{
         return ch == '.';
     }
 
+    inline int IsSubexpMark(int ch){
+        return (ch == ':' || ch == '=' || ch == '!' || ch == '>' ? ch : 0);
+    }
+
     inline int IsSubexpMark(const char * s){
-        if(*s++ == '?')
-            return (*s == ':' || *s == '=' || *s == '!' ? *s : 0);
-        return 0;
+        return (*s == '?' ? IsSubexpMark(*(s + 1)) : 0);
     }
 
     inline char TransSlash(int ch){

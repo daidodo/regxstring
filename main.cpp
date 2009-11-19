@@ -7,7 +7,11 @@
 
 using namespace std;
 
-int main(int argc,const char ** argv)
+#ifndef WIN32
+#   include "test.h"
+#endif
+
+void use(int argc,const char ** argv)
 {
     int c = 1;
     if(argc > 1){
@@ -17,25 +21,20 @@ int main(int argc,const char ** argv)
     }
     CRegxString regxstr;
     std::string regx;
-#ifdef WIN32
-    std::ifstream inf("input.txt");
-    if(!inf.is_open()){
-        cerr<<"cannot open input file\n";
-        return 1;
-    }
-    //if(c < 10)
-    //    c = 10;
-    std::getline(inf,regx);
-#else
-    while(std::getline(cin,regx))
-
-#endif
-    {
+    while(std::getline(cin,regx)){
         regxstr.ParseRegx(Tools::Trim(regx));
+#if _DZ_DEBUG
         regxstr.Debug(cout);
+#endif
         for(int i = 0;i < c;++i)
             cout<<regxstr.RandString()<<endl;
         cout<<endl;
     }
+}
+
+int main(int argc,const char ** argv)
+{
+    batch_test();
+    //user(argc,argv);
     return 0;
 }
