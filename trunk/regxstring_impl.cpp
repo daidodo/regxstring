@@ -37,7 +37,7 @@ __Edge::__Edge(int ch)
     }
 }
 
-void __Edge::RandString(std::ostringstream & oss,std::vector<std::string> & refs) const
+void __Edge::RandString(std::ostringstream & oss,__Refs & refs) const
 {}
 
 void __Edge::Debug(std::ostream & out,int lvl) const
@@ -50,7 +50,7 @@ __Text::__Text(int ch)
     : str_(1,ch)
 {}
 
-void __Text::RandString(std::ostringstream & oss,std::vector<std::string> & refs) const
+void __Text::RandString(std::ostringstream & oss,__Refs & refs) const
 {
     oss<<str_;
 }
@@ -70,7 +70,7 @@ __Charset::__Charset(const std::string & str,bool include)
     , inc_(include)
 {}
 
-void __Charset::RandString(std::ostringstream & oss,std::vector<std::string> & refs) const
+void __Charset::RandString(std::ostringstream & oss,__Refs & refs) const
 {
     assert(inc_);
     if(!str_.empty())
@@ -173,9 +173,9 @@ __Repeat::~__Repeat(){
         delete node_;
 }
 
-void __Repeat::RandString(std::ostringstream & oss,std::vector<std::string> & refs) const
+void __Repeat::RandString(std::ostringstream & oss,__Refs & refs) const
 {
-    const int INF_MAX = 10;
+    const int INF_MAX = 5;
     assert(0 <= min_ && (INFINITE == max_ || min_ <= max_) && node_);
     int t = (max_ == INFINITE ? INF_MAX : max_);
     t = min_ + rand() % (t - min_ + 1);
@@ -214,7 +214,7 @@ __Seq::~__Seq(){
         delete *i;
 }
 
-void __Seq::RandString(std::ostringstream & oss,std::vector<std::string> & refs) const
+void __Seq::RandString(std::ostringstream & oss,__Refs & refs) const
 {
     for(__Con::const_iterator i = seq_.begin(),e = seq_.end();i != e;++i)
         (*i)->RandString(oss,refs);
@@ -234,6 +234,15 @@ void __Seq::Debug(std::ostream & out,int lvl) const
 
 void __Seq::AppendNode(__NodeBase * node)
 {
+    __Text * cur = dynamic_cast<__Text *>(node);
+    if(cur && !seq_.empty()){
+        __Text * prev = dynamic_cast<__Text *>(seq_.back());
+        if(prev){
+            *prev += *cur;
+            delete node;
+            return;
+        }
+    }
     seq_.push_back(node);
 }
 
@@ -249,7 +258,7 @@ __Group::~__Group()
         delete node_;
 }
 
-void __Group::RandString(std::ostringstream & oss,std::vector<std::string> & refs) const
+void __Group::RandString(std::ostringstream & oss,__Refs & refs) const
 {
     if(node_){
         switch(mark_){
@@ -257,10 +266,10 @@ void __Group::RandString(std::ostringstream & oss,std::vector<std::string> & ref
             case ':':
             case '=':node_->RandString(oss,refs);break;
             default:{
-                std::ostringstream tmp;
-                node_->RandString(tmp,refs);
-                refs.push_back(tmp.str());
-                oss<<tmp.str();
+                size_t begin = oss.str().size();
+                refs.push_back(std::make_pair(begin,std::string::npos));
+                node_->RandString(oss,refs);
+                refs.back().second = oss.str().size() - begin;
             }
         }
     }
@@ -268,14 +277,14 @@ void __Group::RandString(std::ostringstream & oss,std::vector<std::string> & ref
 
 void __Group::Debug(std::ostream & out,int lvl) const
 {
-    out<<sep(lvl)<<"Group";
+    out<<sep(lvl)<<"Group(";
     switch(mark_){
-        case ':':out<<"(?:)";break;
-        case '=':out<<"(?=)";break;
-        case '!':out<<"(?!)";break;
-        default:;
+        case ':':out<<"?:";break;
+        case '=':out<<"?=";break;
+        case '!':out<<"?!";break;
+        default:out<<mark_;
     }
-    out<<"\n";
+    out<<")\n";
     ++lvl;
     if(node_)
         node_->Debug(out,lvl);
@@ -295,7 +304,7 @@ __Select::~__Select()
         delete *i;
 }
 
-void __Select::RandString(std::ostringstream & oss,std::vector<std::string> & refs) const
+void __Select::RandString(std::ostringstream & oss,__Refs & refs) const
 {
     if(!sel_.empty()){
         __NodeBase * n = sel_[rand() % sel_.size()];
@@ -325,16 +334,17 @@ __Ref::__Ref(int index)
     : index_(index)
 {}
 
-void __Ref::RandString(std::ostringstream & oss,std::vector<std::string> & refs) const
+void __Ref::RandString(std::ostringstream & oss,__Refs & refs) const
 {
-    assert(0 <= index_ && size_t(index_) <= refs.size());
     if(!index_){
         std::string s = oss.str();
         oss<<s;
-    }else if(size_t(index_) <= refs.size())
-        oss<<refs[index_ - 1];
-    else
-        oss<<index_;
+    }else if(size_t(index_) <= refs.size()){
+        __Refs::const_reference ref = refs[index_ - 1];
+        std::string str = oss.str();
+        if(ref.first < str.size())
+            oss<<str.substr(ref.first,ref.second);
+    }
 }
 
 void __Ref::Debug(std::ostream & out,int lvl) const

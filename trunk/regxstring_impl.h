@@ -5,12 +5,15 @@
 #include <vector>
 #include <iosfwd>
 #include <sstream>
+#include <utility>
+
+typedef std::vector<std::pair<size_t,size_t> > __Refs;
 
 struct __NodeBase
 {
     //functions
     virtual ~__NodeBase();
-    virtual void RandString(std::ostringstream & oss,std::vector<std::string> & refs) const = 0;
+    virtual void RandString(std::ostringstream & oss,__Refs & refs) const = 0;
     virtual void Debug(std::ostream & out,int lvl) const = 0;
     virtual bool CanRepeat(int ch);
     virtual void AppendNode(__NodeBase * node);
@@ -21,7 +24,7 @@ class __Edge : public __NodeBase
     bool begin_;
 public:
     explicit __Edge(int ch);
-    void RandString(std::ostringstream & oss,std::vector<std::string> & refs) const;
+    void RandString(std::ostringstream & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
 };
 
@@ -31,8 +34,9 @@ class __Text : public __NodeBase
 public:
     //functions
     explicit __Text(int ch);
-    void RandString(std::ostringstream & oss,std::vector<std::string> & refs) const;
+    void RandString(std::ostringstream & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
+    __Text & operator +=(const __Text & other){str_ += other.str_;return *this;}
 };
 
 class __Charset : public __NodeBase
@@ -43,7 +47,7 @@ public:
     //functions
     __Charset();
     __Charset(const std::string & str,bool include);
-    void RandString(std::ostringstream & oss,std::vector<std::string> & refs) const;
+    void RandString(std::ostringstream & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
     void Exclude();
     void AddChar(int ch);
@@ -67,7 +71,7 @@ public:
     __Repeat(__NodeBase * node,int ch);
     __Repeat(__NodeBase * node,int min,int max);
     ~__Repeat();
-    void RandString(std::ostringstream & oss,std::vector<std::string> & refs) const;
+    void RandString(std::ostringstream & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
     bool CanRepeat(int ch);
 };
@@ -80,7 +84,7 @@ public:
     //functions
     explicit __Seq(__NodeBase * node);
     ~__Seq();
-    void RandString(std::ostringstream & oss,std::vector<std::string> & refs) const;
+    void RandString(std::ostringstream & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
     void AppendNode(__NodeBase * node);
 };
@@ -93,7 +97,7 @@ public:
     //functions
     __Group(__NodeBase * node,int mark);
     ~__Group();
-    void RandString(std::ostringstream & oss,std::vector<std::string> & refs) const;
+    void RandString(std::ostringstream & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
 };
 
@@ -105,7 +109,7 @@ public:
     //functions
     explicit __Select(__NodeBase * node);
     ~__Select();
-    void RandString(std::ostringstream & oss,std::vector<std::string> & refs) const;
+    void RandString(std::ostringstream & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
     void AppendNode(__NodeBase * node);
 };
@@ -115,7 +119,7 @@ class __Ref : public __NodeBase
     int index_;
 public:
     explicit __Ref(int index);
-    void RandString(std::ostringstream & oss,std::vector<std::string> & refs) const;
+    void RandString(std::ostringstream & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
 };
 
