@@ -7,6 +7,8 @@
 #include <sstream>
 #include <utility>
 
+#define _DZ_DEBUG 0
+
 typedef std::vector<std::pair<size_t,size_t> > __Refs;
 
 struct __NodeBase
@@ -15,7 +17,7 @@ struct __NodeBase
     virtual ~__NodeBase();
     virtual void RandString(std::ostringstream & oss,__Refs & refs) const = 0;
     virtual void Debug(std::ostream & out,int lvl) const = 0;
-    virtual bool CanRepeat(int ch);
+    virtual int Repeat(int ch);
     virtual void AppendNode(__NodeBase * node);
 };
 
@@ -73,7 +75,7 @@ public:
     ~__Repeat();
     void RandString(std::ostringstream & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
-    bool CanRepeat(int ch);
+    int Repeat(int ch);
 };
 
 class __Seq : public __NodeBase
@@ -91,6 +93,8 @@ public:
 
 class __Group : public __NodeBase
 {
+    static const int SIGN = 0x800000;
+    static const int MAX_GROUPS = 9;
     __NodeBase * node_;
     int mark_;
 public:

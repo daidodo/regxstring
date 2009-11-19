@@ -92,9 +92,13 @@ CRegxString::__Ret CRegxString::processSeq()
             begin = false;
             continue;
         }
-        if(Tools::IsRepeat(ch) && cur && cur->CanRepeat(ch)){
-            cur = new __Repeat(cur,ch);
-            continue;
+        if(Tools::IsRepeat(ch) && cur){
+            int r = cur->Repeat(ch);
+            if(r){
+                if(r == 1)
+                    cur = new __Repeat(cur,ch);
+                continue;
+            }
         }
         if(Tools::IsRepeatBegin(ch)){
             cur = processRepeat(cur);
@@ -243,7 +247,7 @@ CRegxString::__Ret CRegxString::processSelect(__NodeBase * node)
 
 __NodeBase * CRegxString::processRepeat(__NodeBase * node)
 {
-    if(node && node->CanRepeat(0)){
+    if(node && node->Repeat(0)){
         size_t bak = i_++;
         int min = 0,max = __Repeat::INFINITE;
         switch(processInt(min)){

@@ -202,6 +202,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\test.h"
+				>
+			</File>
+			<File
 				RelativePath=".\tools.h"
 				>
 			</File>
@@ -217,6 +221,10 @@
 			</File>
 			<File
 				RelativePath=".\makefile"
+				>
+			</File>
+			<File
+				RelativePath=".\not_support.txt"
 				>
 			</File>
 			<File
