@@ -1,6 +1,6 @@
 TARGET := regxStr.out
 SRC := $(wildcard *.cpp)
-CXXFLAGS := -Wall -g
+CXXFLAGS := -Wall -g -O2
 LIB :=
 
 OBJ := $(SRC:.cpp=.o)

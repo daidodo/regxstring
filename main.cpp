@@ -17,22 +17,25 @@ int main(int argc,const char ** argv)
     }
     CRegxString regxstr;
     std::string regx;
-//*
+#ifdef WIN32
     std::ifstream inf("input.txt");
     if(!inf.is_open()){
         cerr<<"cannot open input file\n";
         return 1;
     }
+    //if(c < 10)
+    //    c = 10;
     std::getline(inf,regx);
-/*/
+#else
     while(std::getline(cin,regx))
 
-//*/
+#endif
     {
         regxstr.ParseRegx(Tools::Trim(regx));
-        //regxstr.Debug(cout);
+        regxstr.Debug(cout);
         for(int i = 0;i < c;++i)
             cout<<regxstr.RandString()<<endl;
+        cout<<endl;
     }
     return 0;
 }

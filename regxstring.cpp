@@ -45,7 +45,7 @@ void CRegxString::ParseRegx(const std::string & regx)
 
 std::string CRegxString::RandString() const
 {
-    std::vector<std::string> refs;
+    __Refs refs;
     std::ostringstream oss;
     if(top_)
         top_->RandString(oss,refs);
@@ -213,13 +213,12 @@ __NodeBase * CRegxString::processGroup()
     int bak = i_++;
     int mark = ignoreSubexpMarks();
     ends_.push_back(')');
+    if(!mark)
+        mark = ++ref_;
     __Ret ret = processSeq();
     ends_.pop_back();
-    if(ret.second){
-        if(!mark)
-            ++ref_;
+    if(ret.second)
         return new __Group(ret.first,mark);
-    }
     delete ret.first;
     i_ = bak;
     return new __Text('(');
