@@ -198,7 +198,7 @@ __Repeat::~__Repeat(){
 
 void __Repeat::RandString(std::ostringstream & oss,__Refs & refs) const
 {
-    const int INF_MAX = 2;
+    const int INF_MAX = 10;
     int m = min_ & (REPEAT_MAX - 1);
     assert(0 <= m && (INFINITE == max_ || m <= max_) && node_);
     int t = (max_ == INFINITE ? INF_MAX : (max_ < REPEAT_MAX ? max_ : REPEAT_MAX));
@@ -330,7 +330,7 @@ void __Group::Debug(std::ostream & out,int lvl) const
         case '=':out<<"?=";break;
         case '!':out<<"?!";break;
         case '>':out<<"?>";break;
-        default:out<<mark_;
+        default:out<<(mark_ - SIGN);
     }
     out<<")\n";
     ++lvl;
