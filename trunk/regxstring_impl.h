@@ -65,6 +65,9 @@ private:
 struct __Repeat : public __NodeBase
 {
     static const int INFINITE = -1;
+    static const int REPEAT_MAX = 1 << 16;
+    static const int NON_GREEDY = 1 << 17;
+    static const int PROSSESSIVE = 1 << 18;
 private:
     __NodeBase * node_;
     int min_,max_;
@@ -76,6 +79,10 @@ public:
     void RandString(std::ostringstream & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
     int Repeat(int ch);
+private:
+    bool isNonGreedy() const{return (min_ & NON_GREEDY) != 0;}
+    bool isPossessive() const{return (min_ & PROSSESSIVE) != 0;}
+    bool canRepeat() const{return !(min_ & (PROSSESSIVE | PROSSESSIVE));}
 };
 
 class __Seq : public __NodeBase

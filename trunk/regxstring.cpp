@@ -160,9 +160,14 @@ CRegxString::__Ret CRegxString::processSlash(bool bNode)
         set->Unique();
         ret.first = set;
     }else if(bNode){
-        if(Tools::IsDigit(ret.second) && ref_ + '0' >= ret.second)
-            ret.first = new __Ref(ret.second - '0');
-        else
+        if(Tools::IsDigit(ret.second)){
+            int i = ret.second - '0';
+            if(!i)
+                ret.second = 0;
+            else if(i <= ref_)
+                ret.first = new __Ref(i);
+        }
+        if(!ret.first)
             ret.first = new __Text(ret.second);
     }
     return ret;
