@@ -9,7 +9,6 @@ using namespace std;
 
 bool debug;
 
-
 static std::string pre_handle(const std::string & str)
 {
     std::string ret = Tools::Trim(str);

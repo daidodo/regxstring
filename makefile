@@ -4,7 +4,7 @@ CXXFLAGS := -Wall -g -O2
 LIB := /usr/lib/libpcre.a
 
 OBJ := $(SRC:.cpp=.o)
-DEP := $(OBJ.o=.d)
+DEP := $(OBJ:.o=.d)
 HEADER := $(wildcard *.h)
 
 CXXFLAGS+=-MD
