@@ -1,7 +1,7 @@
 TARGET := regxStr.out
 SRC := $(wildcard *.cpp)
 CXXFLAGS := -Wall -g -O2
-LIB := -lboost_regex
+LIB := /usr/lib/libpcre.a
 
 OBJ := $(SRC:.cpp=.o)
 DEP := $(OBJ.o=.d)

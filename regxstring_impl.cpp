@@ -199,9 +199,9 @@ __Repeat::~__Repeat(){
 void __Repeat::RandString(std::ostringstream & oss,__Refs & refs) const
 {
     const int INF_MAX = 2;
-    int m = (min_ >= 0 ? min_ : -min_);
+    int m = min_ & (REPEAT_MAX - 1);
     assert(0 <= m && (INFINITE == max_ || m <= max_) && node_);
-    int t = (max_ == INFINITE ? INF_MAX : max_);
+    int t = (max_ == INFINITE ? INF_MAX : (max_ < REPEAT_MAX ? max_ : REPEAT_MAX));
     t = m + rand() % (t - m + 1);
     while(t-- > 0)
         node_->RandString(oss,refs);
@@ -215,6 +215,10 @@ void __Repeat::Debug(std::ostream & out,int lvl) const
         out<<"INF";
     else
         out<<max_;
+    if(isNonGreedy())
+        out<<",NON_GREEDY";
+    else if(isPossessive())
+        out<<",PROSSESSIVE";
     out<<"]\n";
     ++lvl;
     if(node_)
@@ -225,7 +229,14 @@ void __Repeat::Debug(std::ostream & out,int lvl) const
 
 int __Repeat::Repeat(int ch)
 {
-    return (Tools::IsNonGreedy(ch) && min_ >= 0 ? 2 : 0);
+    if(canRepeat()){
+        switch(ch){
+            case '?':min_ |= NON_GREEDY;return 2;break;
+            case '+':min_ |= PROSSESSIVE;return 2;break;
+            default:;
+        }
+    }
+    return 0;
 }
 
 //class __Seq

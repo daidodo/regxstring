@@ -9,10 +9,6 @@ namespace Tools{
         return ch == '?' || ch == '+' || ch == '*';
     }
 
-    inline bool IsNonGreedy(int ch){
-        return ch == '?';
-    }
-
     inline bool IsBegin(int ch){
         return ch == '^';
     }
@@ -93,6 +89,11 @@ namespace Tools{
     }
 
     std::string Trim(std::string str);
+
+    bool ExtractArg(const char * argstr,const char * pattern,const char *& result);
+
+    const char * ProgramName(const char * argstr);
+
 }
 
 #endif
