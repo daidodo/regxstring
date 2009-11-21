@@ -100,7 +100,7 @@ public:
 
 class __Group : public __NodeBase
 {
-    static const int SIGN = 0x800000;
+    static const int INDEX = 0x800000;   //group index flag
     static const int MAX_GROUPS = 9;
     __NodeBase * node_;
     int mark_;
