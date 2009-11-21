@@ -69,9 +69,11 @@ int main(int argc,const char ** argv)
     }
     if(c < 1)
         c = 1;
+#ifndef WIN32
     if(test)
         test_pcre(c);
     else
+#endif
         use(c);
     //test_01();
     return 0;
