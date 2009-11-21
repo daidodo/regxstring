@@ -289,7 +289,7 @@ __Group::__Group(__NodeBase * node,int mark)
     , mark_(mark)
 {
     if(!Tools::IsSubexpMark(mark_))
-        mark_ += SIGN;
+        mark_ |= INDEX;
 }
 
 __Group::~__Group()
@@ -307,7 +307,7 @@ void __Group::RandString(std::ostringstream & oss,__Refs & refs) const
             case '=':
             case '>':node_->RandString(oss,refs);break;
             default:{
-                int i = mark_ - SIGN - 1;
+                int i = (mark_ & (INDEX - 1));
                 assert(0 <= i && i < MAX_GROUPS);
                 if(size_t(i) >= refs.size())
                     refs.resize(i + 1);
@@ -315,7 +315,8 @@ void __Group::RandString(std::ostringstream & oss,__Refs & refs) const
                 ref.first = oss.str().size();
                 ref.second = std::string::npos;
                 node_->RandString(oss,refs);
-                ref.second = oss.str().size() - ref.first;
+                assert(size_t(i) < refs.size());
+                refs[i].second = oss.str().size() - ref.first;
             }
         }
     }
@@ -330,7 +331,7 @@ void __Group::Debug(std::ostream & out,int lvl) const
         case '=':out<<"?=";break;
         case '!':out<<"?!";break;
         case '>':out<<"?>";break;
-        default:out<<(mark_ - SIGN);
+        default:out<<(mark_ & (INDEX - 1));
     }
     out<<")\n";
     ++lvl;
