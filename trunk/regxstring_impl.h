@@ -65,10 +65,10 @@ private:
 struct __Repeat : public __NodeBase
 {
     static const int INFINITE = -1;
-    static const int REPEAT_MAX = 1 << 16;
-    static const int NON_GREEDY = 1 << 17;
-    static const int PROSSESSIVE = 1 << 18;
 private:
+    static const int _REPEAT_MAX = (1 << 6) - 1;
+    static const int _NON_GREEDY = 1 << 17;
+    static const int _PROSSESSIVE = 1 << 18;
     __NodeBase * node_;
     int min_,max_;
 public:
@@ -80,9 +80,9 @@ public:
     void Debug(std::ostream & out,int lvl) const;
     int Repeat(int ch);
 private:
-    bool isNonGreedy() const{return (min_ & NON_GREEDY) != 0;}
-    bool isPossessive() const{return (min_ & PROSSESSIVE) != 0;}
-    bool canRepeat() const{return !(min_ & (PROSSESSIVE | PROSSESSIVE));}
+    bool isNonGreedy() const{return (min_ & _NON_GREEDY) != 0;}
+    bool isPossessive() const{return (min_ & _PROSSESSIVE) != 0;}
+    bool canRepeat() const{return !(min_ & (_NON_GREEDY | _PROSSESSIVE));}
 };
 
 class __Seq : public __NodeBase

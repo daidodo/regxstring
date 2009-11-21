@@ -2,7 +2,8 @@
 #define DOZERG_REGXSTRING_H_20091012
 
 #include <vector>
-#include "regxstring_impl.h"
+
+struct __NodeBase;
 
 class CRegxString
 {

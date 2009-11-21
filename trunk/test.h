@@ -43,8 +43,8 @@ static pcre * pcre_compile_DZ(const std::string & regx)
 
 static bool pcre_exec_DZ(const std::string & str,pcre * re)
 {
-    const int OVECCOUNT = 30;
-    int ovector[OVECCOUNT];
+    const int size = 60;
+    std::vector<int> ovector(size);
     int rc = pcre_exec(
         re,                   /* the compiled pattern */
         0,                    /* no extra data - we didn't study the pattern */
@@ -52,13 +52,13 @@ static bool pcre_exec_DZ(const std::string & str,pcre * re)
         (int)str.size(),      /* the length of the subject */
         0,                    /* start at offset 0 in the subject */
         0,                    /* default options */
-        ovector,              /* output vector for substring information */
-        OVECCOUNT);           /* number of elements in the output vector */
+        &ovector[0],          /* output vector for substring information */
+        size);                /* number of elements in the output vector */
     if (rc < 0){
         switch(rc){
             case PCRE_ERROR_NOMATCH:break;
                 // Handle other special cases if you like
-            default:cout<<"Matching error "<<rc<<" :";break;
+            default:cout<<"Matching error "<<rc<<" :\n";break;
         }
         return false;
     }
@@ -83,6 +83,7 @@ static void test_pcre(int c)
                 cout<<str<<endl;
         }
         cout<<endl;
+        pcre_free(re);
     }
 }
 

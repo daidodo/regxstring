@@ -186,10 +186,9 @@ __Repeat::__Repeat(__NodeBase * node,int ch)
 
 __Repeat::__Repeat(__NodeBase * node,int min,int max)
     : node_(node)
-    , min_(min)
-    , max_(max)
+    , min_(min < _REPEAT_MAX ? min : _REPEAT_MAX)
+    , max_(max < _REPEAT_MAX ? max : _REPEAT_MAX)
 {}
-
 
 __Repeat::~__Repeat(){
     if(node_)
@@ -198,13 +197,14 @@ __Repeat::~__Repeat(){
 
 void __Repeat::RandString(std::ostringstream & oss,__Refs & refs) const
 {
-    const int INF_MAX = 10;
-    int m = min_ & (REPEAT_MAX - 1);
-    assert(0 <= m && (INFINITE == max_ || m <= max_) && node_);
-    int t = (max_ == INFINITE ? INF_MAX : (max_ < REPEAT_MAX ? max_ : REPEAT_MAX));
-    t = m + rand() % (t - m + 1);
-    while(t-- > 0)
-        node_->RandString(oss,refs);
+    assert(node_);
+    int m = (min_ & _REPEAT_MAX);
+    int t = (max_ & _REPEAT_MAX);
+    if(m <= t){
+        t = m + rand() % (t - m + 1);
+        while(t-- > 0)
+            node_->RandString(oss,refs);
+    }
     _OSS_OUT("__Repeat");
 }
 
@@ -231,8 +231,8 @@ int __Repeat::Repeat(int ch)
 {
     if(canRepeat()){
         switch(ch){
-            case '?':min_ |= NON_GREEDY;return 2;break;
-            case '+':min_ |= PROSSESSIVE;return 2;break;
+            case '?':min_ |= _NON_GREEDY;return 2;break;
+            case '+':min_ |= _PROSSESSIVE;return 2;break;
             default:;
         }
     }

@@ -5,6 +5,7 @@
 
 #include "tools.h"
 #include "regxstring.h"
+#include "regxstring_impl.h"
 
 static void appendNode(__NodeBase *& parent,__NodeBase * node)
 {
