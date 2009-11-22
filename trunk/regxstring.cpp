@@ -38,10 +38,18 @@ void CRegxString::ParseRegx(const std::string & regx)
     i_ = ref_ = 0;
     ends_.clear();
     regx_ = regx;
-    if(!regx_.empty()){
-        top_ = processSeq().first;
-        srand((unsigned int)time(0));
+    if(regx_.empty())
+        return;
+    top_ = processSeq().first;
+    if(!top_)
+        return;
+    __NodeBase * r = top_->Optimize();
+    if(r){
+        delete top_;
+        top_ = (r == REP_NULL ? 0 : r);
     }
+    if(top_)
+        srand((unsigned int)time(0));
 }
 
 std::string CRegxString::RandString() const

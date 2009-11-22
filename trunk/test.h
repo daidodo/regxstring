@@ -37,17 +37,20 @@ static pcre * pcre_compile_DZ(const std::string & regx)
         &erroffset,
         0);
     if (!re)
-        cout<<"error at offset "<<erroffset<<": "<<error<<"\n\n";
+        cerr<<"error at offset "<<erroffset<<": "<<error<<"\n\n";
     return re;
 }
 
 static bool pcre_exec_DZ(const std::string & str,pcre * re)
 {
-    const int size = 60;
+    const int size = 120;
     std::vector<int> ovector(size);
+    pcre_extra extra;
+    extra.flags = PCRE_EXTRA_MATCH_LIMIT;
+    extra.match_limit = 200000000;
     int rc = pcre_exec(
         re,                   /* the compiled pattern */
-        0,                    /* no extra data - we didn't study the pattern */
+        &extra,               /* no extra data - we didn't study the pattern */
         str.c_str(),          /* the subject string */
         (int)str.size(),      /* the length of the subject */
         0,                    /* start at offset 0 in the subject */
@@ -58,7 +61,7 @@ static bool pcre_exec_DZ(const std::string & str,pcre * re)
         switch(rc){
             case PCRE_ERROR_NOMATCH:break;
                 // Handle other special cases if you like
-            default:cout<<"Matching error "<<rc<<" :\n";break;
+            default:cerr<<"Matching error "<<rc<<" :\n";break;
         }
         return false;
     }
@@ -80,7 +83,7 @@ static void test_pcre(int c)
         for(int i = 0;i < c;++i){
             std::string str = regxstr.RandString();
             if(!pcre_exec_DZ(str,re))
-                cout<<str<<endl;
+                cerr<<str<<endl;
         }
         cout<<endl;
         pcre_free(re);
