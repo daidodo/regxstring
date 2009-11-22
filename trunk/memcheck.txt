@@ -1,0 +1,59 @@
+==5062== Memcheck, a memory error detector.
+==5062== Copyright (C) 2002-2008, and GNU GPL'd, by Julian Seward et al.
+==5062== Using LibVEX rev 1884, a library for dynamic binary translation.
+==5062== Copyright (C) 2004-2008, and GNU GPL'd, by OpenWorks LLP.
+==5062== Using valgrind-3.4.1-Debian, a dynamic binary instrumentation framework.
+==5062== Copyright (C) 2000-2008, and GNU GPL'd, by Julian Seward et al.
+==5062== For more details, rerun with: -v
+==5062== 
+==5062== 
+==5062== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 17 from 1)
+==5062== malloc/free: in use at exit: 712 bytes in 80 blocks.
+==5062== malloc/free: 10,748,366 allocs, 10,748,286 frees, 8,176,478,147 bytes allocated.
+==5062== For counts of detected errors, rerun with: -v
+==5062== searching for pointers to 80 not-freed blocks.
+==5062== checked 96,412 bytes.
+==5062== 
+==5062== 168 (72 direct, 96 indirect) bytes in 6 blocks are definitely lost in loss record 3 of 6
+==5062==    at 0x40269EE: operator new(unsigned int) (vg_replace_malloc.c:224)
+==5062==    by 0x804C39A: CRegxString::processGroup() (regxstring.cpp:241)
+==5062==    by 0x804C116: CRegxString::processSeq() (regxstring.cpp:133)
+==5062==    by 0x804C376: CRegxString::processGroup() (regxstring.cpp:238)
+==5062==    by 0x804C116: CRegxString::processSeq() (regxstring.cpp:133)
+==5062==    by 0x804C4D1: CRegxString::ParseRegx(std::string const&) (regxstring.cpp:43)
+==5062==    by 0x8049F01: use(int) (main.cpp:42)
+==5062==    by 0x804A4CA: main (main.cpp:77)
+==5062== 
+==5062== 
+==5062== 80 (64 direct, 16 indirect) bytes in 4 blocks are definitely lost in loss record 4 of 6
+==5062==    at 0x40269EE: operator new(unsigned int) (vg_replace_malloc.c:224)
+==5062==    by 0x804BCF9: appendNode(__NodeBase*&, __NodeBase*) (regxstring.cpp:15)
+==5062==    by 0x804BF0B: CRegxString::processSeq() (regxstring.cpp:118)
+==5062==    by 0x804C376: CRegxString::processGroup() (regxstring.cpp:238)
+==5062==    by 0x804C116: CRegxString::processSeq() (regxstring.cpp:133)
+==5062==    by 0x804C4D1: CRegxString::ParseRegx(std::string const&) (regxstring.cpp:43)
+==5062==    by 0x8049F01: use(int) (main.cpp:42)
+==5062==    by 0x804A4CA: main (main.cpp:77)
+==5062== 
+==5062== 
+==5062== 232 bytes in 29 blocks are definitely lost in loss record 5 of 6
+==5062==    at 0x40269EE: operator new(unsigned int) (vg_replace_malloc.c:224)
+==5062==    by 0x804BF85: CRegxString::processSeq() (regxstring.cpp:125)
+==5062==    by 0x804C4D1: CRegxString::ParseRegx(std::string const&) (regxstring.cpp:43)
+==5062==    by 0x8049F01: use(int) (main.cpp:42)
+==5062==    by 0x804A4CA: main (main.cpp:77)
+==5062== 
+==5062== 
+==5062== 232 bytes in 29 blocks are definitely lost in loss record 6 of 6
+==5062==    at 0x40269EE: operator new(unsigned int) (vg_replace_malloc.c:224)
+==5062==    by 0x804BDCF: CRegxString::processSeq() (regxstring.cpp:101)
+==5062==    by 0x804C4D1: CRegxString::ParseRegx(std::string const&) (regxstring.cpp:43)
+==5062==    by 0x8049F01: use(int) (main.cpp:42)
+==5062==    by 0x804A4CA: main (main.cpp:77)
+==5062== 
+==5062== LEAK SUMMARY:
+==5062==    definitely lost: 600 bytes in 68 blocks.
+==5062==    indirectly lost: 112 bytes in 12 blocks.
+==5062==      possibly lost: 0 bytes in 0 blocks.
+==5062==    still reachable: 0 bytes in 0 blocks.
+==5062==         suppressed: 0 bytes in 0 blocks.
