@@ -96,10 +96,12 @@ CRegxString::__Ret CRegxString::processSeq()
     bool begin = true;
     for(const size_t e = regx_.length();i_ < e;++i_){
         int ch = regx_[i_];
-        if(begin && Tools::IsBegin(ch)){
-            cur = new __Edge(ch);
+        if(begin){
+            if(Tools::IsBegin(ch)){
+                cur = new __Edge(ch);
+                continue;
+            }
             begin = false;
-            continue;
         }
         if(Tools::IsRepeat(ch) && cur){
             int r = cur->Repeat(ch);
