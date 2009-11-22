@@ -13,19 +13,24 @@ typedef std::vector<std::pair<size_t,size_t> > __Refs;
 
 struct __NodeBase
 {
+    static const int _REP_NUL = 1; //replace with NULL(0)
     //functions
     virtual ~__NodeBase();
+    virtual __NodeBase * Optimize() = 0;
     virtual void RandString(std::ostringstream & oss,__Refs & refs) const = 0;
     virtual void Debug(std::ostream & out,int lvl) const = 0;
     virtual int Repeat(int ch);
     virtual void AppendNode(__NodeBase * node);
 };
 
+static __NodeBase * const REP_NULL = (__NodeBase *)__NodeBase::_REP_NUL;
+
 class __Edge : public __NodeBase
 {
     bool begin_;
 public:
     explicit __Edge(int ch);
+    __NodeBase * Optimize();
     void RandString(std::ostringstream & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
 };
@@ -36,6 +41,7 @@ class __Text : public __NodeBase
 public:
     //functions
     explicit __Text(int ch);
+    __NodeBase * Optimize();
     void RandString(std::ostringstream & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
     __Text & operator +=(const __Text & other){str_ += other.str_;return *this;}
@@ -44,11 +50,12 @@ public:
 class __Charset : public __NodeBase
 {
     std::string str_;
-    bool inc_;
+    size_t inc_;
 public:
     //functions
     __Charset();
     __Charset(const std::string & str,bool include);
+    __NodeBase * Optimize();
     void RandString(std::ostringstream & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
     void Exclude();
@@ -76,6 +83,7 @@ public:
     __Repeat(__NodeBase * node,int ch);
     __Repeat(__NodeBase * node,int min,int max);
     ~__Repeat();
+    __NodeBase * Optimize();
     void RandString(std::ostringstream & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
     int Repeat(int ch);
@@ -93,6 +101,7 @@ public:
     //functions
     explicit __Seq(__NodeBase * node);
     ~__Seq();
+    __NodeBase * Optimize();
     void RandString(std::ostringstream & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
     void AppendNode(__NodeBase * node);
@@ -101,13 +110,14 @@ public:
 class __Group : public __NodeBase
 {
     static const int INDEX = 0x800000;   //group index flag
-    static const int MAX_GROUPS = 9;
+    static const size_t MAX_GROUPS = 9;
     __NodeBase * node_;
-    int mark_;
+    size_t mark_;
 public:
     //functions
     __Group(__NodeBase * node,int mark);
     ~__Group();
+    __NodeBase * Optimize();
     void RandString(std::ostringstream & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
 };
@@ -120,6 +130,7 @@ public:
     //functions
     explicit __Select(__NodeBase * node);
     ~__Select();
+    __NodeBase * Optimize();
     void RandString(std::ostringstream & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
     void AppendNode(__NodeBase * node);
@@ -127,9 +138,10 @@ public:
 
 class __Ref : public __NodeBase
 {
-    int index_;
+    size_t index_;
 public:
     explicit __Ref(int index);
+    __NodeBase * Optimize();
     void RandString(std::ostringstream & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
 };

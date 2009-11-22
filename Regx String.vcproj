@@ -228,6 +228,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\makefile.release"
+				>
+			</File>
+			<File
 				RelativePath=".\Regx String.doc"
 				>
 			</File>

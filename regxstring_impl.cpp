@@ -32,6 +32,13 @@ static std::string sep(int lvl)
     return ret;
 }
 
+struct __IsNull
+{
+    bool operator ()(__NodeBase * n) const{
+        return 0 == n;
+    }
+};
+
 //struct __NodeBase
 __NodeBase::~__NodeBase()
 {}
@@ -56,6 +63,11 @@ __Edge::__Edge(int ch)
     }
 }
 
+__NodeBase * __Edge::Optimize()
+{
+    return REP_NULL;
+}
+
 void __Edge::RandString(std::ostringstream & oss,__Refs & refs) const
 {
     _OSS_OUT("__Edge");
@@ -71,6 +83,11 @@ __Text::__Text(int ch)
     : str_(1,ch)
 {}
 
+__NodeBase * __Text::Optimize()
+{
+    return (str_.empty() ? REP_NULL : 0);
+}
+
 void __Text::RandString(std::ostringstream & oss,__Refs & refs) const
 {
     oss<<str_;
@@ -84,7 +101,7 @@ void __Text::Debug(std::ostream & out,int lvl) const
 
 //class __Charset
 __Charset::__Charset()
-    : inc_(true)
+    : inc_(1)
 {}
 
 __Charset::__Charset(const std::string & str,bool include)
@@ -92,24 +109,32 @@ __Charset::__Charset(const std::string & str,bool include)
     , inc_(include)
 {}
 
+__NodeBase * __Charset::Optimize()
+{
+    if(!inc_)
+        reverse();
+    if(str_.empty())
+        return REP_NULL;
+    inc_ = str_.size();
+    return 0;
+}
+
 void __Charset::RandString(std::ostringstream & oss,__Refs & refs) const
 {
-    assert(inc_);
-    if(!str_.empty())
-        oss<<str_[rand() % str_.size()];
+    assert(inc_ == str_.size());
+    oss<<str_[rand() % inc_];
     _OSS_OUT("__Charset");
 }
 
 void __Charset::Debug(std::ostream & out,int lvl) const
 {
-    out<<sep(lvl)<<"Charset("
-        <<(inc_ ? "INCLUDE" : "EXCLUDE")
+    out<<sep(lvl)<<"Charset(INCLUDE"
         <<", "<<str_<<")\n";
 }
 
 void __Charset::Exclude()
 {
-    inc_ = false;
+    inc_ = 0;
 }
 
 void __Charset::AddChar(int ch)
@@ -195,31 +220,38 @@ __Repeat::~__Repeat(){
         delete node_;
 }
 
+__NodeBase * __Repeat::Optimize()
+{
+    min_ &= _REPEAT_MAX;
+    max_ &= _REPEAT_MAX;
+    if(!node_ || (min_ > max_) || (!min_ && !max_))
+        return REP_NULL;
+    __NodeBase * r = node_->Optimize();
+    if(r == REP_NULL)
+        return REP_NULL;
+    else if(r){
+        delete node_;
+        node_ = r;
+    }
+    if(1 == max_ && 1 == min_){
+        r = node_;
+        node_ = 0;
+        return r;
+    }
+    max_ -= min_ - 1;
+    return 0;
+}
+
 void __Repeat::RandString(std::ostringstream & oss,__Refs & refs) const
 {
-    assert(node_);
-    int m = (min_ & _REPEAT_MAX);
-    int t = (max_ & _REPEAT_MAX);
-    if(m <= t){
-        t = m + rand() % (t - m + 1);
-        while(t-- > 0)
-            node_->RandString(oss,refs);
-    }
+    for(int t = min_ + rand() % max_;t > 0;t--)
+        node_->RandString(oss,refs);
     _OSS_OUT("__Repeat");
 }
 
 void __Repeat::Debug(std::ostream & out,int lvl) const
 {
-    out<<sep(lvl)<<"Repeat["<<min_<<", ";
-    if(max_ == INFINITE)
-        out<<"INF";
-    else
-        out<<max_;
-    if(isNonGreedy())
-        out<<",NON_GREEDY";
-    else if(isPossessive())
-        out<<",PROSSESSIVE";
-    out<<"]\n";
+    out<<sep(lvl)<<"Repeat["<<min_<<", "<<(min_ + max_ - 1)<<"]\n";
     ++lvl;
     if(node_)
         node_->Debug(out,lvl);
@@ -248,6 +280,31 @@ __Seq::__Seq(__NodeBase * node)
 __Seq::~__Seq(){
     for(__Con::const_iterator i = seq_.begin(),e = seq_.end();i != e;++i)
         delete *i;
+}
+
+__NodeBase * __Seq::Optimize()
+{
+    if(seq_.empty())
+        return REP_NULL;
+    for(__Con::iterator i = seq_.begin(),e = seq_.end();i != e;++i)
+        if(*i){
+            __NodeBase * r = (*i)->Optimize();
+            if(r == REP_NULL)
+                *i = 0;
+            else if(r){
+                delete *i;
+                *i = r;
+            }
+        }
+    seq_.erase(std::remove_if(seq_.begin(),seq_.end(),__IsNull()),seq_.end());
+    if(seq_.empty())
+        return REP_NULL;
+    if(seq_.size() == 1){
+        __NodeBase * r = seq_[0];
+        seq_.clear();
+        return r;
+    }
+    return 0;
 }
 
 void __Seq::RandString(std::ostringstream & oss,__Refs & refs) const
@@ -298,28 +355,40 @@ __Group::~__Group()
         delete node_;
 }
 
+__NodeBase * __Group::Optimize()
+{
+    if(!node_ || mark_ == '!')
+        return REP_NULL;
+    __NodeBase * r = node_->Optimize();
+    if(r == REP_NULL)
+        return REP_NULL;
+    else if(r){
+        delete node_;
+        node_ = r;
+    }
+    switch(mark_){
+        case ':':
+        case '=':
+        case '>':{
+            r = node_;
+            node_ = 0;
+            return r;}
+        default:;
+    }
+    mark_ = (mark_ & (INDEX - 1)) - 1;
+    return 0;
+}
+
 void __Group::RandString(std::ostringstream & oss,__Refs & refs) const
 {
-    if(node_){
-        switch(mark_){
-            case '!':break;
-            case ':':
-            case '=':
-            case '>':node_->RandString(oss,refs);break;
-            default:{
-                int i = (mark_ & (INDEX - 1));
-                assert(0 <= i && i < MAX_GROUPS);
-                if(size_t(i) >= refs.size())
-                    refs.resize(i + 1);
-                __Refs::reference ref = refs[i];
-                ref.first = oss.str().size();
-                ref.second = std::string::npos;
-                node_->RandString(oss,refs);
-                assert(size_t(i) < refs.size());
-                refs[i].second = oss.str().size() - ref.first;
-            }
-        }
-    }
+    assert(node_);
+    assert(0 <= mark_ && mark_ < MAX_GROUPS);
+    if(mark_ >= refs.size())
+        refs.resize(mark_ + 1);
+    refs.back() = __Refs::value_type(oss.str().size(),std::string::npos);
+    node_->RandString(oss,refs);
+    assert(mark_ < refs.size());
+    refs[mark_].second = oss.str().size() - refs[mark_].first;
     _OSS_OUT("__Group");
 }
 
@@ -353,6 +422,31 @@ __Select::~__Select()
         delete *i;
 }
 
+__NodeBase * __Select::Optimize()
+{
+    if(sel_.empty())
+        return REP_NULL;
+    for(__Con::iterator i = sel_.begin(),e = sel_.end();i != e;++i)
+        if(*i){
+            __NodeBase * r = (*i)->Optimize();
+            if(r == REP_NULL)
+                *i = 0;
+            else if(r){
+                delete *i;
+                *i = r;
+            }
+        }
+    sel_.erase(std::remove_if(sel_.begin(),sel_.end(),__IsNull()),sel_.end());
+    if(sel_.empty())
+        return REP_NULL;
+    if(sel_.size() == 1){
+        __NodeBase * r = sel_[0];
+        sel_.clear();
+        return r;
+    }
+    return 0;
+}
+
 void __Select::RandString(std::ostringstream & oss,__Refs & refs) const
 {
     if(!sel_.empty()){
@@ -384,17 +478,19 @@ __Ref::__Ref(int index)
     : index_(index)
 {}
 
+__NodeBase * __Ref::Optimize()
+{
+    --index_;
+    return 0;
+}
+
 void __Ref::RandString(std::ostringstream & oss,__Refs & refs) const
 {
-    if(!index_){
-        std::string s = oss.str();
-        oss<<s;
-    }else if(size_t(index_) <= refs.size()){
-        __Refs::const_reference ref = refs[index_ - 1];
-        std::string str = oss.str();
-        if(ref.first < str.size())
-            oss<<str.substr(ref.first,ref.second);
-    }
+    assert(index_ < refs.size());
+    __Refs::const_reference ref = refs[index_];
+    std::string str = oss.str();
+    if(ref.first < str.size())
+        oss<<str.substr(ref.first,ref.second);
     _OSS_OUT("__Ref("<<index_<<")");
 }
 
