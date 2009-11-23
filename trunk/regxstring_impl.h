@@ -13,7 +13,7 @@
 
 #define _MEM_LEAK 0
 typedef std::pair<size_t,size_t>    __RefValue;
-typedef __DZ_VECTOR(__RefValue)          __Refs;
+typedef __DZ_VECTOR(__RefValue)     __Refs;
 
 struct __NodeBase
 {
@@ -78,7 +78,7 @@ struct __Repeat : public __NodeBase
 {
     static const int INFINITE = -1;
 private:
-    static const int _REPEAT_MAX = (1 << 6) - 1;
+    static const int _REPEAT_MAX = (1 << 5) - 1;
     static const int _NON_GREEDY = 1 << 17;
     static const int _PROSSESSIVE = 1 << 18;
     __NodeBase * node_;
