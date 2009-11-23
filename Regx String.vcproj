@@ -232,6 +232,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\memcheck.txt"
+				>
+			</File>
+			<File
 				RelativePath=".\Regx String.doc"
 				>
 			</File>

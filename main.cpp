@@ -4,6 +4,7 @@
 
 #include "tools.h"
 #include "regxstring.h"
+#include "regxstring_impl.h"
 
 using namespace std;
 
@@ -67,8 +68,8 @@ int main(int argc,const char ** argv)
         }else
             c = atoi(argv[i]);
     }
-    if(c < 1)
-        c = 1;
+    if(c < 0)
+        c = 0;
 #ifndef WIN32
     if(test)
         test_pcre(c);
@@ -76,5 +77,8 @@ int main(int argc,const char ** argv)
 #endif
         use(c);
     //test_01();
+#if _MEM_LEAK
+    cerr<<"__NodeBase::ref = "<<__NodeBase::ref<<endl;
+#endif
     return 0;
 }

@@ -28,3 +28,7 @@ RESULT:
 real    1m13.551s
 user    1m11.940s
 sys     0m1.190s
+
+real    1m8.942s
+user    1m7.630s
+sys     0m1.090s

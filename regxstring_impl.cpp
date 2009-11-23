@@ -35,13 +35,23 @@ static std::string sep(int lvl)
 struct __IsNull
 {
     bool operator ()(__NodeBase * n) const{
-        return 0 == n;
+        return !n;
     }
 };
 
 //struct __NodeBase
+__NodeBase * const __NodeBase::REP_NULL = (__NodeBase *)1;
+
+#if _MEM_LEAK
+int __NodeBase::ref = 0;
+#endif
+
 __NodeBase::~__NodeBase()
-{}
+{
+#if _MEM_LEAK
+    --ref;
+#endif
+}
 
 int __NodeBase::Repeat(int ch)
 {
@@ -55,13 +65,8 @@ void __NodeBase::AppendNode(__NodeBase * node)
 
 //struct __Edge
 __Edge::__Edge(int ch)
-{
-    switch(ch){
-        case '^':begin_ = true;break;
-        case '$':begin_ = false;break;
-        default:assert(0);
-    }
-}
+    : begin_(ch == '^')
+{}
 
 __NodeBase * __Edge::Optimize()
 {
@@ -273,9 +278,8 @@ int __Repeat::Repeat(int ch)
 
 //class __Seq
 __Seq::__Seq(__NodeBase * node)
-{
-    seq_.push_back(node);
-}
+    : seq_(1,node)
+{}
 
 __Seq::~__Seq(){
     for(__Con::const_iterator i = seq_.begin(),e = seq_.end();i != e;++i)
@@ -289,11 +293,9 @@ __NodeBase * __Seq::Optimize()
     for(__Con::iterator i = seq_.begin(),e = seq_.end();i != e;++i)
         if(*i){
             __NodeBase * r = (*i)->Optimize();
-            if(r == REP_NULL)
-                *i = 0;
-            else if(r){
+            if(r){
                 delete *i;
-                *i = r;
+                *i = (r == REP_NULL ? 0 : r);
             }
         }
     seq_.erase(std::remove_if(seq_.begin(),seq_.end(),__IsNull()),seq_.end());
@@ -328,15 +330,13 @@ void __Seq::Debug(std::ostream & out,int lvl) const
 
 void __Seq::AppendNode(__NodeBase * node)
 {
-    __Text * cur = dynamic_cast<__Text *>(node);
-    if(cur && !seq_.empty()){
-        __Text * prev = dynamic_cast<__Text *>(seq_.back());
-        if(prev){
-            *prev += *cur;
-            delete node;
-            return;
-        }
-    }
+    if(!seq_.empty())
+        if(__Text * cur = dynamic_cast<__Text *>(node))
+            if(__Text * prev = dynamic_cast<__Text *>(seq_.back())){
+                *prev += *cur;
+                delete node;
+                return;
+            }
     seq_.push_back(node);
 }
 
@@ -412,9 +412,9 @@ void __Group::Debug(std::ostream & out,int lvl) const
 
 //class __Select
 __Select::__Select(__NodeBase * node)
-{
-    sel_.push_back(node);
-}
+    : sel_(1,node)
+    , sz_(0)
+{}
 
 __Select::~__Select()
 {
@@ -429,11 +429,9 @@ __NodeBase * __Select::Optimize()
     for(__Con::iterator i = sel_.begin(),e = sel_.end();i != e;++i)
         if(*i){
             __NodeBase * r = (*i)->Optimize();
-            if(r == REP_NULL)
-                *i = 0;
-            else if(r){
+            if(r){
                 delete *i;
-                *i = r;
+                *i = (r == REP_NULL ? 0 : r);
             }
         }
     sel_.erase(std::remove_if(sel_.begin(),sel_.end(),__IsNull()),sel_.end());
@@ -444,16 +442,14 @@ __NodeBase * __Select::Optimize()
         sel_.clear();
         return r;
     }
+    sz_ = sel_.size();
     return 0;
 }
 
 void __Select::RandString(std::ostringstream & oss,__Refs & refs) const
 {
-    if(!sel_.empty()){
-        __NodeBase * n = sel_[rand() % sel_.size()];
-        if(n)
-            n->RandString(oss,refs);
-    }
+    if(sz_)
+        sel_[rand() % sz_]->RandString(oss,refs);
     _OSS_OUT("__Ref");
 }
 
