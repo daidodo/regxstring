@@ -32,3 +32,11 @@ sys     0m1.190s
 real    1m8.942s
 user    1m7.630s
 sys     0m1.090s
+
+real    1m11.233s
+user    1m9.970s
+sys     0m1.140s
+
+real    1m9.656s
+user    1m8.170s
+sys     0m1.130s

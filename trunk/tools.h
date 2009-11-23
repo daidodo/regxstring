@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include "alloc.h"
+
 namespace Tools{
 
     inline bool IsRepeat(int ch){
@@ -88,7 +90,7 @@ namespace Tools{
         return ch;
     }
 
-    std::string Trim(std::string str);
+    __DZ_STRING Trim(__DZ_STRING str);
 
     bool ExtractArg(const char * argstr,const char * pattern,const char *& result);
 

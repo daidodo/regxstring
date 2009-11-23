@@ -3,7 +3,7 @@
 #include "tools.h"
 
 namespace Tools{
-    std::string Trim(std::string str)
+    __DZ_STRING Trim(__DZ_STRING str)
     {
         size_t i = 0,e = str.length();
         for(;i < e && std::isspace(str[i]);++i);

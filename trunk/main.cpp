@@ -9,10 +9,11 @@
 using namespace std;
 
 bool debug;
+const char * filename;
 
-static std::string pre_handle(const std::string & str)
+static __DZ_STRING pre_handle(const __DZ_STRING & str)
 {
-    std::string ret = Tools::Trim(str);
+    __DZ_STRING ret = Tools::Trim(str);
     if(!ret.empty()){
         if(ret[0] != '^')
             ret = "^" + ret;
@@ -28,18 +29,32 @@ static std::string pre_handle(const std::string & str)
 
 static void printUsage(const char * exe)
 {
-    cout<<"Usage: "<<exe<<" [N [-t]] [-d]\n"
-        <<"  N     generate N random strings, default 1\n"
-        <<"  -t    batch test\n"
-        <<"  -d    output debug info\n"
+    cout<<"Usage: "<<exe<<" [N] [-t] [-d] [-f=FILE] [-h|?|--help]\n"
+        <<"  N          generate N random strings, default 1\n"
+        <<"  -t         batch test\n"
+        <<"  -d         output debug info\n"
+        <<"  -f         use FILE as input\n"
+        <<"  -h\n"
+        <<"  ?\n"
+        <<"  --help     print this message\n"
         <<endl;
 }
 
 static void use(int c)
 {
     CRegxString regxstr;
-    std::string regx;
-    while(std::getline(cin,regx)){
+    __DZ_STRING regx;
+    std::istream * in = &cin;
+    if(filename){
+        std::ifstream * file = New<std::ifstream>(filename);
+        if(!file->is_open()){
+            Delete(file);
+            cerr<<"cannot open file "<<filename<<endl;
+            return;
+        }
+        in = file;
+    }
+    while(std::getline(*in,regx)){
         regxstr.ParseRegx(pre_handle(regx));
         if(debug)
             regxstr.Debug(cout);
@@ -47,6 +62,8 @@ static void use(int c)
             cout<<regxstr.RandString()<<endl;
         cout<<endl;
     }
+    if(filename)
+        Delete(in);
 }
 
 int main(int argc,const char ** argv)
@@ -65,6 +82,8 @@ int main(int argc,const char ** argv)
             test = true;
         }else if((Tools::ExtractArg(argv[i],"-d",ret) || Tools::ExtractArg(argv[i],"-debug",ret)) && !ret){
             debug = true;
+        }else if((Tools::ExtractArg(argv[i],"-f=",ret) || Tools::ExtractArg(argv[i],"-debug",ret)) && ret){
+            filename = ret;
         }else
             c = atoi(argv[i]);
     }

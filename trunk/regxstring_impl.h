@@ -7,11 +7,13 @@
 #include <sstream>
 #include <utility>
 
+#include "alloc.h"
+
 #define _DZ_DEBUG 0
 
 #define _MEM_LEAK 0
-
-typedef std::vector<std::pair<size_t,size_t> > __Refs;
+typedef std::pair<size_t,size_t>    __RefValue;
+typedef __DZ_VECTOR(__RefValue)          __Refs;
 
 struct __NodeBase
 {
@@ -22,7 +24,7 @@ struct __NodeBase
 #endif
     virtual ~__NodeBase();
     virtual __NodeBase * Optimize() = 0;
-    virtual void RandString(std::ostringstream & oss,__Refs & refs) const = 0;
+    virtual void RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const = 0;
     virtual void Debug(std::ostream & out,int lvl) const = 0;
     virtual int Repeat(int ch);
     virtual void AppendNode(__NodeBase * node);
@@ -34,32 +36,32 @@ class __Edge : public __NodeBase
 public:
     explicit __Edge(int ch);
     __NodeBase * Optimize();
-    void RandString(std::ostringstream & oss,__Refs & refs) const;
+    void RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
 };
 
 class __Text : public __NodeBase
 {
-    std::string str_;
+    __DZ_STRING str_;
 public:
     //functions
     explicit __Text(int ch);
     __NodeBase * Optimize();
-    void RandString(std::ostringstream & oss,__Refs & refs) const;
+    void RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
     __Text & operator +=(const __Text & other){str_ += other.str_;return *this;}
 };
 
 class __Charset : public __NodeBase
 {
-    std::string str_;
+    __DZ_STRING str_;
     size_t inc_;
 public:
     //functions
     __Charset();
-    __Charset(const std::string & str,bool include);
+    __Charset(const __DZ_STRING & str,bool include);
     __NodeBase * Optimize();
-    void RandString(std::ostringstream & oss,__Refs & refs) const;
+    void RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
     void Exclude();
     void AddChar(int ch);
@@ -87,7 +89,7 @@ public:
     __Repeat(__NodeBase * node,int min,int max);
     ~__Repeat();
     __NodeBase * Optimize();
-    void RandString(std::ostringstream & oss,__Refs & refs) const;
+    void RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
     int Repeat(int ch);
 private:
@@ -98,14 +100,14 @@ private:
 
 class __Seq : public __NodeBase
 {
-    typedef std::vector<__NodeBase *> __Con;
+    typedef __DZ_VECTOR(__NodeBase *) __Con;
     __Con seq_;
 public:
     //functions
     explicit __Seq(__NodeBase * node);
     ~__Seq();
     __NodeBase * Optimize();
-    void RandString(std::ostringstream & oss,__Refs & refs) const;
+    void RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
     void AppendNode(__NodeBase * node);
 };
@@ -121,13 +123,13 @@ public:
     __Group(__NodeBase * node,int mark);
     ~__Group();
     __NodeBase * Optimize();
-    void RandString(std::ostringstream & oss,__Refs & refs) const;
+    void RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
 };
 
 class __Select : public __NodeBase
 {
-    typedef std::vector<__NodeBase *> __Con;
+    typedef __DZ_VECTOR(__NodeBase *) __Con;
     __Con sel_;
     size_t sz_;
 public:
@@ -135,7 +137,7 @@ public:
     explicit __Select(__NodeBase * node);
     ~__Select();
     __NodeBase * Optimize();
-    void RandString(std::ostringstream & oss,__Refs & refs) const;
+    void RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
     void AppendNode(__NodeBase * node);
 };
@@ -146,7 +148,7 @@ class __Ref : public __NodeBase
 public:
     explicit __Ref(int index);
     __NodeBase * Optimize();
-    void RandString(std::ostringstream & oss,__Refs & refs) const;
+    void RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
 };
 
