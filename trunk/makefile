@@ -1,7 +1,7 @@
 TARGET := regxStr.out
 SRC := $(wildcard *.cpp)
 
-DEBUG := -g -O0 -DTEST -DNDEBUG
+DEBUG := -g -O0 -DTEST
 #RELEASE := -O2 -DNDEBUG
 
 CXXFLAGS := -Wall $(DEBUG) $(RELEASE)

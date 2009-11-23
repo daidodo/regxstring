@@ -17,17 +17,26 @@ static void appendNode(__NodeBase *& parent,__NodeBase * node)
         parent->AppendNode(node);
 }
 
+static int inEnds(int ch,const __Ends & ends)
+{
+    int ret = 1;
+    for(__Ends::const_reverse_iterator i = ends.rbegin();i != ends.rend();++i,++ret){
+        if(ch == *i)
+            return ret;
+        if(Tools::NeedEnd(*i))
+            break;
+    }
+    return 0;
+}
+
+
 //class CRegxString
 CRegxString::CRegxString()
     : top_(0)
-    , i_(0)
-    , ref_(0)
 {}
 
 CRegxString::CRegxString(const __DZ_STRING & regx)
     : top_(0)
-    , i_(0)
-    , ref_(0)
 {
     ParseRegx(regx);
 }
@@ -35,12 +44,11 @@ CRegxString::CRegxString(const __DZ_STRING & regx)
 void CRegxString::ParseRegx(const __DZ_STRING & regx)
 {
     uninit();
-    i_ = ref_ = 0;
-    ends_.clear();
     regx_ = regx;
     if(regx_.empty())
         return;
-    top_ = processSeq().first;
+    __ParseData pdata;
+    top_ = processSeq(pdata).first;
     if(!top_)
         return;
     __NodeBase * r = top_->Optimize();
@@ -76,27 +84,16 @@ void CRegxString::uninit()
         Delete(top_);
         top_ = 0;
     }
+    str_.clear();
 }
 
-int CRegxString::inEnds(int ch) const
-{
-    int ret = 1;
-    for(__Ends::const_reverse_iterator i = ends_.rbegin();i != ends_.rend();++i,++ret){
-        if(ch == *i)
-            return ret;
-        if(Tools::NeedEnd(*i))
-            break;
-    }
-    return 0;
-}
-
-CRegxString::__Ret CRegxString::processSeq()
+CRegxString::__Ret CRegxString::processSeq(__ParseData & pdata)
 {
     __Ret ret;
     __NodeBase * cur = 0;
     bool begin = true;
-    for(const size_t e = regx_.length();i_ < e;++i_){
-        int ch = regx_[i_];
+    for(const size_t e = regx_.length();pdata.i_ < e;++pdata.i_){
+        int ch = regx_[pdata.i_];
         if(begin){
             if(Tools::IsBegin(ch)){
                 cur = New<__Edge>(ch);
@@ -113,15 +110,15 @@ CRegxString::__Ret CRegxString::processSeq()
             }
         }
         if(Tools::IsRepeatBegin(ch)){
-            cur = processRepeat(cur);
+            cur = processRepeat(cur,pdata);
             continue;
         }
         appendNode(ret.first,cur);
-        ret.second = inEnds(ch);
+        ret.second = inEnds(ch,pdata.ends_);
         if(ret.second)
             return ret;
         if(Tools::IsSelect(ch))
-            return processSelect(ret.first);
+            return processSelect(ret.first,pdata);
         if(Tools::IsEnd(ch))
             cur = New<__Edge>(ch);
         else if(Tools::IsAny(ch)){
@@ -129,11 +126,11 @@ CRegxString::__Ret CRegxString::processSeq()
              set->Unique();
              cur = set;
         }else if(Tools::IsSetBegin(ch))
-            cur = processSet();
+            cur = processSet(pdata);
         else if(Tools::IsGroupBegin(ch))
-            cur = processGroup();
+            cur = processGroup(pdata);
         else if(Tools::IsSlash(ch))
-            cur = processSlash(true).first;
+            cur = processSlash(true,pdata).first;
         else
             cur = New<__Text>(ch);
     }
@@ -141,10 +138,10 @@ CRegxString::__Ret CRegxString::processSeq()
     return ret;
 }
 
-CRegxString::__Ret CRegxString::processSlash(bool bNode)
+CRegxString::__Ret CRegxString::processSlash(bool bNode,__ParseData & pdata)
 {
-    ++i_;
-    __Ret ret(0,i_ < regx_.length() ? Tools::TransSlash(regx_[i_]) : '\\');
+    ++pdata.i_;
+    __Ret ret(0,pdata.i_ < regx_.length() ? Tools::TransSlash(regx_[pdata.i_]) : '\\');
     __Charset * set = 0;
     switch(ret.second){
         case 'd':set = New<__Charset>("0123456789",true);break;
@@ -176,7 +173,7 @@ CRegxString::__Ret CRegxString::processSlash(bool bNode)
             int i = ret.second - '0';
             if(!i)
                 ret.second = 0;
-            else if(i <= ref_)
+            else if(i <= pdata.ref_)
                 ret.first = New<__Ref>(i);
         }
         if(!ret.first)
@@ -185,14 +182,14 @@ CRegxString::__Ret CRegxString::processSlash(bool bNode)
     return ret;
 }
 
-__NodeBase * CRegxString::processSet()
+__NodeBase * CRegxString::processSet(__ParseData & pdata)
 {
-    size_t bak = i_++;
+    size_t bak = pdata.i_++;
     __Charset * ret = New<__Charset>();
     bool begin = true;
     int prev = 0;
-    for(const size_t e = regx_.length();i_ < e;++i_){
-        int ch = regx_[i_];
+    for(const size_t e = regx_.length();pdata.i_ < e;++pdata.i_){
+        int ch = regx_[pdata.i_];
         if(begin && Tools::IsBegin(ch)){
             ret->Exclude();
             begin = false;
@@ -200,7 +197,7 @@ __NodeBase * CRegxString::processSet()
         }
         if(Tools::IsDash(ch) && prev){
             int to = 0;
-            if(processRange(to)){
+            if(processRange(to,pdata)){
                 ret->AddRange(prev,to);
                 prev = 0;
                 continue;
@@ -213,7 +210,7 @@ __NodeBase * CRegxString::processSet()
             return ret;
         }
         if(Tools::IsSlash(ch)){
-            __Ret s = processSlash(false);
+            __Ret s = processSlash(false,pdata);
             if(s.first){    //charset
                 ret->AddRange(dynamic_cast<__Charset *>(s.first));
                 Delete(s.first);
@@ -225,68 +222,68 @@ __NodeBase * CRegxString::processSet()
         prev = ch;
     }
     Delete(ret);
-    i_ = bak;
+    pdata.i_ = bak;
     return New<__Text>('[');
 }
 
-__NodeBase * CRegxString::processGroup()
+__NodeBase * CRegxString::processGroup(__ParseData & pdata)
 {
-    int bak = i_++;
-    int mark = ignoreSubexpMarks();
-    ends_.push_back(')');
+    int bak = pdata.i_++;
+    int mark = ignoreSubexpMarks(pdata);
+    pdata.ends_.push_back(')');
     if(!mark)
-        mark = ++ref_;
-    __Ret ret = processSeq();
-    ends_.pop_back();
+        mark = ++pdata.ref_;
+    __Ret ret = processSeq(pdata);
+    pdata.ends_.pop_back();
     if(ret.second)
         return New<__Group>(ret.first,mark);
     Delete(ret.first);
-    i_ = bak;
+    pdata.i_ = bak;
     return New<__Text>('(');
 }
 
-CRegxString::__Ret CRegxString::processSelect(__NodeBase * node)
+CRegxString::__Ret CRegxString::processSelect(__NodeBase * node,__ParseData & pdata)
 {
     __Ret ret(New<__Select>(node),0);
-    ends_.push_back('|');
-    for(const size_t e = regx_.length();i_ < e;){
-        ++i_;
-        __Ret r = processSeq();
+    pdata.ends_.push_back('|');
+    for(const size_t e = regx_.length();pdata.i_ < e;){
+        ++pdata.i_;
+        __Ret r = processSeq(pdata);
         ret.first->AppendNode(r.first);
         if(r.second > 1){
             ret.second = r.second - 1;
             break;
         }
     }
-    ends_.pop_back();
+    pdata.ends_.pop_back();
     return ret;
 }
 
-__NodeBase * CRegxString::processRepeat(__NodeBase * node)
+__NodeBase * CRegxString::processRepeat(__NodeBase * node,__ParseData & pdata)
 {
     if(node && node->Repeat(0)){
-        size_t bak = i_++;
+        size_t bak = pdata.i_++;
         int min = 0,max = __Repeat::INFINITE;
-        switch(processInt(min)){
+        switch(processInt(min,pdata)){
             case ',':
-                ++i_;
-                if(processInt(max) == '}')
+                ++pdata.i_;
+                if(processInt(max,pdata) == '}')
                     return New<__Repeat>(node,min,(min < max ? max : min));
                 break;
             case '}':
                 return New<__Repeat>(node,min,min);
             default:;
         }
-        i_ = bak;
+        pdata.i_ = bak;
     }
     return New<__Text>('{');
 }
 
-int CRegxString::processInt(int & result)
+int CRegxString::processInt(int & result,__ParseData & pdata)
 {
     bool begin = true;
-    for(const size_t e = regx_.length();i_ < e;++i_){
-        int ch = regx_[i_];
+    for(const size_t e = regx_.length();pdata.i_ < e;++pdata.i_){
+        int ch = regx_[pdata.i_];
         if(Tools::IsDigit(ch)){
             ch = Tools::TransDigit(ch);
             if(begin){
@@ -304,23 +301,23 @@ int CRegxString::processInt(int & result)
     return 0;
 }
 
-bool CRegxString::processRange(int & result)
+bool CRegxString::processRange(int & result,__ParseData & pdata)
 {
-    if(++i_ < regx_.size() && regx_[i_] != ']'){
-        result = regx_[i_];
+    if(++pdata.i_ < regx_.size() && regx_[pdata.i_] != ']'){
+        result = regx_[pdata.i_];
         return true;
     }
-    --i_;
+    --pdata.i_;
     return false;
 }
 
-int CRegxString::ignoreSubexpMarks()
+int CRegxString::ignoreSubexpMarks(__ParseData & pdata)
 {
     int ret = 0;
-    if(i_ + 1 < regx_.size()){
-        ret = Tools::IsSubexpMark(&regx_[i_]);
+    if(pdata.i_ + 1 < regx_.size()){
+        ret = Tools::IsSubexpMark(&regx_[pdata.i_]);
         if(ret)
-            i_ += 2;
+            pdata.i_ += 2;
     }
     return ret;
 }
