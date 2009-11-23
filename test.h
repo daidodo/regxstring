@@ -5,7 +5,7 @@
 //{
 //    using namespace boost;
 //    CRegxString regxstr;
-//    std::string regx;
+//    __DZ_STRING regx;
 //    while(std::getline(cin,regx)){
 //        regx = pre_handle(regx);
 //        cout<<"Test regx : "<<regx<<endl;
@@ -18,7 +18,7 @@
 //        }
 //        regxstr.ParseRegx(regx);
 //        for(int i = 0;i < 10;++i){
-//            std::string str = regxstr.RandString();
+//            __DZ_STRING str = regxstr.RandString();
 //            if(!regex_match(str, expr))
 //                cout<<str<<endl;
 //        }
@@ -26,7 +26,7 @@
 //    }
 //}
 
-static pcre * pcre_compile_DZ(const std::string & regx)
+static pcre * pcre_compile_DZ(const __DZ_STRING & regx)
 {
     const char *error;
     int erroffset;
@@ -41,10 +41,10 @@ static pcre * pcre_compile_DZ(const std::string & regx)
     return re;
 }
 
-static bool pcre_exec_DZ(const std::string & str,pcre * re)
+static bool pcre_exec_DZ(const __DZ_STRING & str,pcre * re)
 {
     const int size = 120;
-    std::vector<int> ovector(size);
+    __DZ_VECTOR(int) ovector(size);
     pcre_extra extra;
     extra.flags = PCRE_EXTRA_MATCH_LIMIT;
     extra.match_limit = 200000000;
@@ -72,7 +72,7 @@ static bool pcre_exec_DZ(const std::string & str,pcre * re)
 static void test_pcre(int c)
 {
     CRegxString regxstr;
-    std::string regx;
+    __DZ_STRING regx;
     while(std::getline(cin,regx)){
         regx = pre_handle(regx);
         cout<<"Test regx : "<<regx<<endl;
@@ -81,7 +81,8 @@ static void test_pcre(int c)
             continue;
         regxstr.ParseRegx(regx);
         for(int i = 0;i < c;++i){
-            std::string str = regxstr.RandString();
+            regxstr.RandString();
+            const __DZ_STRING & str = regxstr.LastString();
             if(!pcre_exec_DZ(str,re))
                 cerr<<str<<endl;
         }
@@ -92,9 +93,9 @@ static void test_pcre(int c)
 
 static void test_01()
 {
-    std::string regx = "(a\\1+(\\2+(\\3+)))";
+    __DZ_STRING regx = "(a\\1+(\\2+(\\3+)))";
     pcre * re = pcre_compile_DZ(regx);
-    std::string str;
+    __DZ_STRING str;
     cout<<"search string matching regx : "<<regx<<endl;
     for(int i = 0;i < 1000;++i,str.push_back('a')){
         if(pcre_exec_DZ(str,re))

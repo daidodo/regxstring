@@ -2,14 +2,18 @@
 #define DOZERG_REGXSTRING_H_20091012
 
 #include <vector>
+#include <string>
+
+#include "alloc.h"
 
 struct __NodeBase;
 
 class CRegxString
 {
-    typedef std::vector<char> __Ends;
+    typedef __DZ_VECTOR(char) __Ends;
     typedef std::pair<__NodeBase *,int> __Ret;
-    std::string regx_;
+    __DZ_STRING regx_;
+    __DZ_STRING str_;
     //regx tree
     __NodeBase * top_;
     //parse data
@@ -18,11 +22,12 @@ class CRegxString
     int ref_;
 public:
     CRegxString();
-    explicit CRegxString(const std::string & regx);
+    explicit CRegxString(const __DZ_STRING & regx);
     ~CRegxString(){uninit();}
-    void ParseRegx(const std::string & regx);
-    std::string Regx() const{return regx_;}
-    std::string RandString() const;
+    void ParseRegx(const __DZ_STRING & regx);
+    __DZ_STRING Regx() const{return regx_;}
+    const char * RandString();
+    const __DZ_STRING & LastString() const{return str_;}
     void Debug(std::ostream & out) const;
 private:
     void uninit();

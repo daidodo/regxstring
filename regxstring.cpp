@@ -12,7 +12,7 @@ static void appendNode(__NodeBase *& parent,__NodeBase * node)
     if(!node)
         return;
     if(!parent)
-        parent = new __Seq(node);
+        parent = New<__Seq>(node);
     else
         parent->AppendNode(node);
 }
@@ -24,7 +24,7 @@ CRegxString::CRegxString()
     , ref_(0)
 {}
 
-CRegxString::CRegxString(const std::string & regx)
+CRegxString::CRegxString(const __DZ_STRING & regx)
     : top_(0)
     , i_(0)
     , ref_(0)
@@ -32,7 +32,7 @@ CRegxString::CRegxString(const std::string & regx)
     ParseRegx(regx);
 }
 
-void CRegxString::ParseRegx(const std::string & regx)
+void CRegxString::ParseRegx(const __DZ_STRING & regx)
 {
     uninit();
     i_ = ref_ = 0;
@@ -45,20 +45,21 @@ void CRegxString::ParseRegx(const std::string & regx)
         return;
     __NodeBase * r = top_->Optimize();
     if(r){
-        delete top_;
+        Delete(top_);
         top_ = (r == __NodeBase::REP_NULL ? 0 : r);
     }
     if(top_)
         srand((unsigned int)time(0));
 }
 
-std::string CRegxString::RandString() const
+const char * CRegxString::RandString()
 {
     __Refs refs;
-    std::ostringstream oss;
+    __DZ_OSTRINGSTREAM oss;
     if(top_)
         top_->RandString(oss,refs);
-    return oss.str();
+    str_ = oss.str();
+    return str_.c_str();
 }
 
 void CRegxString::Debug(std::ostream & out) const{
@@ -72,7 +73,7 @@ void CRegxString::Debug(std::ostream & out) const{
 void CRegxString::uninit()
 {
     if(top_){
-        delete top_;
+        Delete(top_);
         top_ = 0;
     }
 }
@@ -98,7 +99,7 @@ CRegxString::__Ret CRegxString::processSeq()
         int ch = regx_[i_];
         if(begin){
             if(Tools::IsBegin(ch)){
-                cur = new __Edge(ch);
+                cur = New<__Edge>(ch);
                 continue;
             }
             begin = false;
@@ -107,7 +108,7 @@ CRegxString::__Ret CRegxString::processSeq()
             int r = cur->Repeat(ch);
             if(r){
                 if(r == 1)
-                    cur = new __Repeat(cur,ch);
+                    cur = New<__Repeat>(cur,ch);
                 continue;
             }
         }
@@ -122,9 +123,9 @@ CRegxString::__Ret CRegxString::processSeq()
         if(Tools::IsSelect(ch))
             return processSelect(ret.first);
         if(Tools::IsEnd(ch))
-            cur = new __Edge(ch);
+            cur = New<__Edge>(ch);
         else if(Tools::IsAny(ch)){
-             __Charset * set = new __Charset("\n",false);
+             __Charset * set = New<__Charset>("\n",false);
              set->Unique();
              cur = set;
         }else if(Tools::IsSetBegin(ch))
@@ -134,7 +135,7 @@ CRegxString::__Ret CRegxString::processSeq()
         else if(Tools::IsSlash(ch))
             cur = processSlash(true).first;
         else
-            cur = new __Text(ch);
+            cur = New<__Text>(ch);
     }
     appendNode(ret.first,cur);
     return ret;
@@ -146,19 +147,19 @@ CRegxString::__Ret CRegxString::processSlash(bool bNode)
     __Ret ret(0,i_ < regx_.length() ? Tools::TransSlash(regx_[i_]) : '\\');
     __Charset * set = 0;
     switch(ret.second){
-        case 'd':set = new __Charset("0123456789",true);break;
-        case 'D':set = new __Charset("0123456789",false);break;
-        case 's':set = new __Charset(/*"\f\n\r\v"*/"\t ",true);break;
-        case 'S':set = new __Charset(/*"\f\n\r\v"*/"\t ",false);break;
+        case 'd':set = New<__Charset>("0123456789",true);break;
+        case 'D':set = New<__Charset>("0123456789",false);break;
+        case 's':set = New<__Charset>(/*"\f\n\r\v"*/"\t ",true);break;
+        case 'S':set = New<__Charset>(/*"\f\n\r\v"*/"\t ",false);break;
         case 'w':{   //A-Za-z0-9_
-            set = new __Charset();
+            set = New<__Charset>();
             set->AddRange('A','Z');
             set->AddRange('a','z');
             set->AddRange('0','9');
             set->AddChar('_');
             break;}
         case 'W':{   //^A-Za-z0-9_
-            set = new __Charset();
+            set =  New<__Charset>();
             set->AddRange('A','Z');
             set->AddRange('a','z');
             set->AddRange('0','9');
@@ -176,10 +177,10 @@ CRegxString::__Ret CRegxString::processSlash(bool bNode)
             if(!i)
                 ret.second = 0;
             else if(i <= ref_)
-                ret.first = new __Ref(i);
+                ret.first = New<__Ref>(i);
         }
         if(!ret.first)
-            ret.first = new __Text(ret.second);
+            ret.first = New<__Text>(ret.second);
     }
     return ret;
 }
@@ -187,7 +188,7 @@ CRegxString::__Ret CRegxString::processSlash(bool bNode)
 __NodeBase * CRegxString::processSet()
 {
     size_t bak = i_++;
-    __Charset * ret = new __Charset();
+    __Charset * ret = New<__Charset>();
     bool begin = true;
     int prev = 0;
     for(const size_t e = regx_.length();i_ < e;++i_){
@@ -215,7 +216,7 @@ __NodeBase * CRegxString::processSet()
             __Ret s = processSlash(false);
             if(s.first){    //charset
                 ret->AddRange(dynamic_cast<__Charset *>(s.first));
-                delete s.first;
+                Delete(s.first);
                 prev = 0;
                 continue;
             }
@@ -223,9 +224,9 @@ __NodeBase * CRegxString::processSet()
         }
         prev = ch;
     }
-    delete ret;
+    Delete(ret);
     i_ = bak;
-    return new __Text('[');
+    return New<__Text>('[');
 }
 
 __NodeBase * CRegxString::processGroup()
@@ -238,15 +239,15 @@ __NodeBase * CRegxString::processGroup()
     __Ret ret = processSeq();
     ends_.pop_back();
     if(ret.second)
-        return new __Group(ret.first,mark);
-    delete ret.first;
+        return New<__Group>(ret.first,mark);
+    Delete(ret.first);
     i_ = bak;
-    return new __Text('(');
+    return New<__Text>('(');
 }
 
 CRegxString::__Ret CRegxString::processSelect(__NodeBase * node)
 {
-    __Ret ret(new __Select(node),0);
+    __Ret ret(New<__Select>(node),0);
     ends_.push_back('|');
     for(const size_t e = regx_.length();i_ < e;){
         ++i_;
@@ -270,15 +271,15 @@ __NodeBase * CRegxString::processRepeat(__NodeBase * node)
             case ',':
                 ++i_;
                 if(processInt(max) == '}')
-                    return new __Repeat(node,min,(min < max ? max : min));
+                    return New<__Repeat>(node,min,(min < max ? max : min));
                 break;
             case '}':
-                return new __Repeat(node,min,min);
+                return New<__Repeat>(node,min,min);
             default:;
         }
         i_ = bak;
     }
-    return new __Text('{');
+    return New<__Text>('{');
 }
 
 int CRegxString::processInt(int & result)
