@@ -232,6 +232,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\makefile.prof"
+				>
+			</File>
+			<File
 				RelativePath=".\makefile.release"
 				>
 			</File>

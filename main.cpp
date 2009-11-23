@@ -23,7 +23,7 @@ static __DZ_STRING pre_handle(const __DZ_STRING & str)
     return ret;
 }
 
-#ifndef WIN32
+#ifdef TEST
 #   include "test.h"
 #endif
 
@@ -31,7 +31,9 @@ static void printUsage(const char * exe)
 {
     cout<<"Usage: "<<exe<<" [N] [-t] [-d] [-f=FILE] [-h|?|--help]\n"
         <<"  N          generate N random strings, default 1\n"
+#ifdef TEST
         <<"  -t         batch test\n"
+#endif
         <<"  -d         output debug info\n"
         <<"  -f         use FILE as input\n"
         <<"  -h\n"
@@ -89,7 +91,7 @@ int main(int argc,const char ** argv)
     }
     if(c < 0)
         c = 0;
-#ifndef WIN32
+#ifdef TEST
     if(test)
         test_pcre(c);
     else

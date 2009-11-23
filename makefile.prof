@@ -1,11 +1,11 @@
 TARGET := regxStr.out
 SRC := $(wildcard *.cpp)
 
-#DEBUG := -g
-RELEASE := -O2 -DNDEBUG
+DEBUG := -g -pg
+#RELEASE := -O2 -DNDEBUG
 
 CXXFLAGS := -Wall $(DEBUG) $(RELEASE)
-LIB :=
+LIB := /usr/lib/libpcre.a
 
 OBJ := $(SRC:.cpp=.o)
 DEP := $(OBJ:.o=.d)
