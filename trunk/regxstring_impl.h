@@ -9,12 +9,17 @@
 
 #define _DZ_DEBUG 0
 
+#define _MEM_LEAK 0
+
 typedef std::vector<std::pair<size_t,size_t> > __Refs;
 
 struct __NodeBase
 {
-    static const int _REP_NUL = 1; //replace with NULL(0)
-    //functions
+    static __NodeBase * const REP_NULL; //replace with NULL(0)
+#if _MEM_LEAK
+    static int ref;
+    __NodeBase(){++ref;}
+#endif
     virtual ~__NodeBase();
     virtual __NodeBase * Optimize() = 0;
     virtual void RandString(std::ostringstream & oss,__Refs & refs) const = 0;
@@ -22,8 +27,6 @@ struct __NodeBase
     virtual int Repeat(int ch);
     virtual void AppendNode(__NodeBase * node);
 };
-
-static __NodeBase * const REP_NULL = (__NodeBase *)__NodeBase::_REP_NUL;
 
 class __Edge : public __NodeBase
 {
@@ -126,6 +129,7 @@ class __Select : public __NodeBase
 {
     typedef std::vector<__NodeBase *> __Con;
     __Con sel_;
+    size_t sz_;
 public:
     //functions
     explicit __Select(__NodeBase * node);

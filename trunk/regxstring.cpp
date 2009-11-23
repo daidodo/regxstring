@@ -46,7 +46,7 @@ void CRegxString::ParseRegx(const std::string & regx)
     __NodeBase * r = top_->Optimize();
     if(r){
         delete top_;
-        top_ = (r == REP_NULL ? 0 : r);
+        top_ = (r == __NodeBase::REP_NULL ? 0 : r);
     }
     if(top_)
         srand((unsigned int)time(0));
