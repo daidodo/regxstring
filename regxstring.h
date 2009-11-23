@@ -8,18 +8,21 @@
 
 struct __NodeBase;
 
+typedef __DZ_VECTOR(char) __Ends;
+
 class CRegxString
 {
-    typedef __DZ_VECTOR(char) __Ends;
     typedef std::pair<__NodeBase *,int> __Ret;
+    struct __ParseData{
+        __Ends ends_;
+        size_t i_;
+        int ref_;
+        __ParseData():i_(0),ref_(0){}
+    };
     __DZ_STRING regx_;
     __DZ_STRING str_;
     //regx tree
     __NodeBase * top_;
-    //parse data
-    __Ends ends_;
-    size_t i_;
-    int ref_;
 public:
     CRegxString();
     explicit CRegxString(const __DZ_STRING & regx);
@@ -31,16 +34,15 @@ public:
     void Debug(std::ostream & out) const;
 private:
     void uninit();
-    int inEnds(int ch) const;
-    __Ret processSeq();
-    __Ret processSlash(bool bNode);
-    __NodeBase * processSet();
-    __NodeBase * processGroup();
-    __Ret processSelect(__NodeBase * node);
-    __NodeBase * processRepeat(__NodeBase * node);
-    int processInt(int & result);
-    bool processRange(int & result);
-    int ignoreSubexpMarks();
+    __Ret processSeq(__ParseData & pdata);
+    __Ret processSlash(bool bNode,__ParseData & pdata);
+    __NodeBase * processSet(__ParseData & pdata);
+    __NodeBase * processGroup(__ParseData & pdata);
+    __Ret processSelect(__NodeBase * node,__ParseData & pdata);
+    __NodeBase * processRepeat(__NodeBase * node,__ParseData & pdata);
+    int processInt(int & result,__ParseData & pdata);
+    bool processRange(int & result,__ParseData & pdata);
+    int ignoreSubexpMarks(__ParseData & pdata);
 };
 
 #endif
