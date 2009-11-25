@@ -1,0 +1,23 @@
+==11938== Memcheck, a memory error detector.
+==11938== Copyright (C) 2002-2008, and GNU GPL'd, by Julian Seward et al.
+==11938== Using LibVEX rev 1884, a library for dynamic binary translation.
+==11938== Copyright (C) 2004-2008, and GNU GPL'd, by OpenWorks LLP.
+==11938== Using valgrind-3.4.1-Debian, a dynamic binary instrumentation framework.
+==11938== Copyright (C) 2000-2008, and GNU GPL'd, by Julian Seward et al.
+==11938== For more details, rerun with: -v
+==11938== 
+==11938== 
+==11938== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 17 from 1)
+==11938== malloc/free: in use at exit: 7,852 bytes in 633 blocks.
+==11938== malloc/free: 535,053 allocs, 534,420 frees, 401,546,779 bytes allocated.
+==11938== For counts of detected errors, rerun with: -v
+==11938== searching for pointers to 633 not-freed blocks.
+==11938== checked 104,048 bytes.
+==11938== 
+==11938== LEAK SUMMARY:
+==11938==    definitely lost: 0 bytes in 0 blocks.
+==11938==      possibly lost: 0 bytes in 0 blocks.
+==11938==    still reachable: 7,852 bytes in 633 blocks.
+==11938==         suppressed: 0 bytes in 0 blocks.
+==11938== Reachable blocks (those to which a pointer was found) are not shown.
+==11938== To see them, rerun with: --leak-check=full --show-reachable=yes
