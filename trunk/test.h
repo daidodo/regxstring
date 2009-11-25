@@ -6,7 +6,7 @@
 //{
 //    using namespace boost;
 //    CRegxString regxstr;
-//    __DZ_STRING regx;
+//    std::string regx;
 //    while(std::getline(cin,regx)){
 //        regx = pre_handle(regx);
 //        cout<<"Test regx : "<<regx<<endl;
@@ -19,7 +19,7 @@
 //        }
 //        regxstr.ParseRegx(regx);
 //        for(int i = 0;i < 10;++i){
-//            __DZ_STRING str = regxstr.RandString();
+//            std::string str = regxstr.RandString();
 //            if(!regex_match(str, expr))
 //                cout<<str<<endl;
 //        }
@@ -27,7 +27,7 @@
 //    }
 //}
 
-static pcre * pcre_compile_DZ(const __DZ_STRING & regx)
+static pcre * pcre_compile_DZ(const std::string & regx)
 {
     const char *error;
     int erroffset;
@@ -42,10 +42,10 @@ static pcre * pcre_compile_DZ(const __DZ_STRING & regx)
     return re;
 }
 
-static bool pcre_exec_DZ(const __DZ_STRING & str,pcre * re)
+static bool pcre_exec_DZ(const std::string & str,pcre * re)
 {
     const int size = 120;
-    __DZ_VECTOR(int) ovector(size);
+    std::vector<int> ovector(size);
     pcre_extra extra;
     extra.flags = PCRE_EXTRA_MATCH_LIMIT;
     extra.match_limit = 200000000;
@@ -73,7 +73,7 @@ static bool pcre_exec_DZ(const __DZ_STRING & str,pcre * re)
 static void test_pcre(int c)
 {
     CRegxString regxstr;
-    __DZ_STRING regx;
+    std::string regx;
     while(std::getline(cin,regx)){
         regx = pre_handle(regx);
         cout<<"Test regx : "<<regx<<endl;
@@ -83,7 +83,7 @@ static void test_pcre(int c)
         regxstr.ParseRegx(regx.c_str());
         for(int i = 0;i < c;++i){
             regxstr.RandString();
-            const __DZ_STRING & str = regxstr.LastString();
+            const std::string & str = regxstr.LastString();
             if(!pcre_exec_DZ(str,re))
                 cerr<<str<<endl;
         }
@@ -92,14 +92,3 @@ static void test_pcre(int c)
     }
 }
 
-static void test_01()
-{
-    __DZ_STRING regx = "(a\\1+(\\2+(\\3+)))";
-    pcre * re = pcre_compile_DZ(regx);
-    __DZ_STRING str;
-    cout<<"search string matching regx : "<<regx<<endl;
-    for(int i = 0;i < 1000;++i,str.push_back('a')){
-        if(pcre_exec_DZ(str,re))
-            cout<<str<<endl;
-    }
-}

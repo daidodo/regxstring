@@ -5,12 +5,72 @@
 #include <vector>
 #include <iosfwd>
 #include <utility>
-
-#include "alloc.h"
+#include <memory>
 
 #define _DZ_DEBUG 0
 
 #define _MEM_LEAK 0
+
+//allocator choice
+#ifndef __GNUC__ 
+#   define __DZ_ALLOC       std::allocator
+#else
+#   ifndef NDEBUG
+#       define __DZ_ALLOC   std::allocator
+#   else
+#       include <ext/pool_allocator.h>
+#       define __DZ_ALLOC   __gnu_cxx::__pool_alloc
+#   endif
+#endif
+
+//stl containers redefine
+    //Sequence
+#define __DZ_BASIC_STRING(C)            std::basic_string< C,std::char_traits< C >,__DZ_ALLOC< C > >
+#define __DZ_BASIC_STRING1(C,T)         std::basic_string< C,T,__DZ_ALLOC< C > >
+#define __DZ_STRING                     __DZ_BASIC_STRING(char)
+#define __DZ_WSTRING                    __DZ_BASIC_STRING(wchar_t)
+#define __DZ_DEQUE(T)                   std::deque< T,__DZ_ALLOC< T > >
+#define __DZ_LIST(T)                    std::list< T,__DZ_ALLOC< T > >
+#define __DZ_VECTOR(T)                  std::vector< T,__DZ_ALLOC< T > >
+    //Associative
+#define __DZ_MAP(K,V)                   std::map< K,V,std::less< K >,__DZ_ALLOC<std::pair< K,V > > >
+#define __DZ_MAP1(K,V,C)                std::map< K,V,C,__DZ_ALLOC<std::pair< K,V > > >
+#define __DZ_MULTIMAP(K,V)              std::multimap< K,V,std::less< K >,__DZ_ALLOC<std::pair< K,V > > >
+#define __DZ_MULTIMAP1(K,V,C)           std::multimap< K,V,C,__DZ_ALLOC<std::pair< K,V > > >
+#define __DZ_SET(K)                     std::set< K,std::less< K >,__DZ_ALLOC< K > >
+#define __DZ_SET1(K,C)                  std::set< K,C,__DZ_ALLOC< K > >
+#define __DZ_MULTISET(K)                std::multiset< K,std::less< K >,__DZ_ALLOC< K > >
+#define __DZ_MULTISET1(K,C)             std::multiset< K,C,__DZ_ALLOC< K > >
+    //String Stream
+#define __DZ_BASIC_ISTRINGSTREAM(C)     std::basic_istringstream< C,std::char_traits< C >,__DZ_ALLOC< C > >
+#define __DZ_BASIC_ISTRINGSTREAM1(C,T)  std::basic_istringstream< C,T,__DZ_ALLOC< C > >
+#define __DZ_BASIC_OSTRINGSTREAM(C)     std::basic_ostringstream< C,std::char_traits< C >,__DZ_ALLOC< C > >
+#define __DZ_BASIC_OSTRINGSTREAM1(C,T)  std::basic_ostringstream< C,T,__DZ_ALLOC< C > >
+#define __DZ_BASIC_STRINGSTREAM(C)      std::basic_stringstream< C,std::char_traits< C >,__DZ_ALLOC< C > >
+#define __DZ_BASIC_STRINGSTREAM1(C,T)   std::basic_stringstream< C,T,__DZ_ALLOC< C > >
+#define __DZ_ISTRINGSTREAM              __DZ_BASIC_ISTRINGSTREAM(char)
+#define __DZ_OSTRINGSTREAM              __DZ_BASIC_OSTRINGSTREAM(char)
+#define __DZ_STRINGSTREAM               __DZ_BASIC_STRINGSTREAM(char)
+#define __DZ_WISTRINGSTREAM             __DZ_BASIC_ISTRINGSTREAM(wchar_t)
+#define __DZ_WOSTRINGSTREAM             __DZ_BASIC_OSTRINGSTREAM(wchar_t)
+#define __DZ_WSTRINGSTREAM              __DZ_BASIC_STRINGSTREAM(wchar_t)
+    //Stream Buf
+#define __DZ_BASIC_STRINGBUF(C)         std::basic_stringbuf< C,std::char_traits< C >,__DZ_ALLOC< C > >
+#define __DZ_BASIC_STRINGBUF1(C,T)      std::basic_stringbuf< C,T,__DZ_ALLOC< C > >
+#define __DZ_STRINGBUF                  __DZ_BASIC_STRINGBUF(char)
+#define __DZ_WSTRINGBUF                 __DZ_BASIC_STRINGBUF(wchar_t)
+    //Extension
+#define __DZ_ROPE(T)                    __gnu_cxx::rope< T,__DZ_ALLOC< T > >
+#define __DZ_SLIST(T)                   __gnu_cxx::slist< T,__DZ_ALLOC< T > >
+
+#define REGXSTRING_NS       __DZ_Regx_String
+
+#define NAMESAPCE_BEGIN     namespace __DZ_Regx_String{
+#define NAMESAPCE_END       }
+
+struct Config;
+
+NAMESAPCE_BEGIN
 
 typedef std::pair<size_t,size_t>    __RefValue;
 
@@ -20,7 +80,7 @@ typedef __DZ_VECTOR(char)           __Ends;
 
 struct __ParseData{
     __Ends ends_;
-    const struct Config & config_;
+    const Config & config_;
     size_t i_;
     int ref_;
     //functions:
@@ -192,6 +252,8 @@ public:
     const __DZ_STRING & LastString() const{return str_;}
     void Debug(std::ostream & out) const;
 private:
+    __CRegxString(const __CRegxString &);
+    __CRegxString & operator =(const __CRegxString &);
     void uninit();
     __Ret processSeq(__ParseData & pdata);
     __Ret processSlash(bool bNode,__ParseData & pdata);
@@ -207,5 +269,7 @@ private:
     __DZ_STRING str_;
     __NodeBase * top_;  //regx tree
 };
+
+NAMESAPCE_END
 
 #endif

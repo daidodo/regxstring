@@ -183,20 +183,12 @@
 				RelativePath=".\regxstring_impl.cpp"
 				>
 			</File>
-			<File
-				RelativePath=".\tools.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Í·ÎÄ¼þ"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
-			<File
-				RelativePath=".\alloc.h"
-				>
-			</File>
 			<File
 				RelativePath=".\regxstring.h"
 				>
@@ -207,10 +199,6 @@
 			</File>
 			<File
 				RelativePath=".\test.h"
-				>
-			</File>
-			<File
-				RelativePath=".\tools.h"
 				>
 			</File>
 		</Filter>
