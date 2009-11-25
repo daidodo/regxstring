@@ -18,7 +18,7 @@ void CRegxString::ParseRegx(const char * regx,const Config * config)
     if(!regx)
         return;
     if(!impl_)
-        impl_ = new __CRegxString;
+        impl_ = new REGXSTRING_NS::__CRegxString;
     impl_->ParseRegx(regx,config);
 }
 

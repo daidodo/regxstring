@@ -1,8 +1,9 @@
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <cstdlib>
+#include <cctype>
 
-#include "tools.h"
 #include "regxstring.h"
 
 using namespace std;
@@ -10,12 +11,40 @@ using namespace std;
 bool debug;
 const char * filename;
 
-static __DZ_STRING pre_handle(const __DZ_STRING & str)
+static std::string Trim(std::string str){
+    size_t i = 0,e = str.length();
+    for(;i < e && std::isspace(str[i]);++i);
+    size_t j = e - 1;
+    for(;j > i && std::isspace(str[j]);--j);
+    return (i <= j ? str.substr(i,j + 1 - i) : "");
+}
+
+static bool ExtractArg(const char * argstr,const char * pattern,const char *& result)
 {
-    __DZ_STRING ret = Tools::Trim(str);
+    if(!argstr || !pattern)
+        return false;
+    for(;*pattern;++pattern,++argstr)
+        if(*pattern != *argstr)
+            return false;
+    result = *argstr ? argstr : 0;
+    return true;
+}
+
+static const char * ProgramName(const char * argstr)
+{
+    const char * ret = argstr;
+    for(const char * cur = argstr;cur && *cur;++cur)
+        if(*cur == '/')
+            ret = cur + 1;
+    return ret;
+}
+
+static std::string pre_handle(const std::string & str)
+{
+    std::string ret = Trim(str);
     if(!ret.empty()){
         if(ret[0] != '^')
-            ret = "^" + ret;
+            ret.insert(ret.begin(),'^');
         if(ret[ret.size() - 1] != '$')
             ret.push_back('$');
     }
@@ -44,12 +73,12 @@ static void printUsage(const char * exe)
 static void use(int c)
 {
     CRegxString regxstr;
-    __DZ_STRING regx;
+    std::string regx;
     std::istream * in = &cin;
     if(filename){
-        std::ifstream * file = New<std::ifstream>(filename);
+        std::ifstream * file = new std::ifstream(filename);
         if(!file->is_open()){
-            Delete(file);
+            delete file;
             cerr<<"cannot open file "<<filename<<endl;
             return;
         }
@@ -64,7 +93,7 @@ static void use(int c)
         cout<<endl;
     }
     if(filename)
-        Delete(in);
+        delete in;
 }
 
 int main(int argc,const char ** argv)
@@ -73,17 +102,17 @@ int main(int argc,const char ** argv)
     bool test = false;
     for(int i = 1;i < argc;++i){
         const char * ret = 0;
-        if((Tools::ExtractArg(argv[i],"-h",ret) ||
-            Tools::ExtractArg(argv[i],"?",ret) ||
-            Tools::ExtractArg(argv[i],"--help",ret)) && !ret)
+        if((ExtractArg(argv[i],"-h",ret) ||
+            ExtractArg(argv[i],"?",ret) ||
+            ExtractArg(argv[i],"--help",ret)) && !ret)
         {
-            printUsage(Tools::ProgramName(argv[0]));
+            printUsage(ProgramName(argv[0]));
             return 0;
-        }else if((Tools::ExtractArg(argv[i],"-t",ret) || Tools::ExtractArg(argv[i],"-test",ret)) && !ret){
+        }else if((ExtractArg(argv[i],"-t",ret) || ExtractArg(argv[i],"-test",ret)) && !ret){
             test = true;
-        }else if((Tools::ExtractArg(argv[i],"-d",ret) || Tools::ExtractArg(argv[i],"-debug",ret)) && !ret){
+        }else if((ExtractArg(argv[i],"-d",ret) || ExtractArg(argv[i],"-debug",ret)) && !ret){
             debug = true;
-        }else if((Tools::ExtractArg(argv[i],"-f=",ret) || Tools::ExtractArg(argv[i],"-debug",ret)) && ret){
+        }else if((ExtractArg(argv[i],"-f=",ret) || ExtractArg(argv[i],"-debug",ret)) && ret){
             filename = ret;
         }else
             c = atoi(argv[i]);
