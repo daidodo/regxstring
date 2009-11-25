@@ -1,0 +1,19 @@
+欢迎使用Regx String，如有任何问题，请联系daidodo@gmail.com
+
+Linux环境安装指南：
+1. 解压安装包文件regxstring_x.x.tar.gz：
+	tar -xzvf regxstring_x.x.tar.gz
+2. 进入regxstring目录：
+	cd regxstring
+3. 编译链接：
+	make -f makefile.release
+4. 安装：
+	make install
+
+如果要卸载Regx String，请在regxstring目录下运行：
+	make uninstall
+
+安装完成后，可以使用如下命令进行测试：
+	echo "[a-z0-9_-]{3,16}" | regxstr 10
+	注意：不能去掉引号
+该命令产生10个符合正则表达式“[a-z0-9_-]{3,16}”的字符串。
