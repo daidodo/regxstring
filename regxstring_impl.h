@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include <iosfwd>
-#include <sstream>
 #include <utility>
 
 #include "alloc.h"
@@ -12,8 +11,12 @@
 #define _DZ_DEBUG 0
 
 #define _MEM_LEAK 0
+
 typedef std::pair<size_t,size_t>    __RefValue;
+
 typedef __DZ_VECTOR(__RefValue)     __Refs;
+
+typedef __DZ_VECTOR(char)           __Ends;
 
 struct __NodeBase
 {
@@ -76,11 +79,13 @@ private:
 
 struct __Repeat : public __NodeBase
 {
-    static const int INFINITE = -1;
+    static const int INFINITE = 1 << 16;
 private:
-    static const int _REPEAT_MAX = (1 << 5) - 1;
+    static const int _INF_VAL = 3;
+    static const int _REPEAT_MAX = __Repeat::INFINITE - 1;
     static const int _NON_GREEDY = 1 << 17;
     static const int _PROSSESSIVE = 1 << 18;
+    static const int _CLEAR_FLAGS = _NON_GREEDY - 1;
     __NodeBase * node_;
     int min_,max_;
 public:
@@ -93,6 +98,7 @@ public:
     void Debug(std::ostream & out,int lvl) const;
     int Repeat(int ch);
 private:
+    bool isInfinite() const{return (max_ & INFINITE) != 0;}
     bool isNonGreedy() const{return (min_ & _NON_GREEDY) != 0;}
     bool isPossessive() const{return (min_ & _PROSSESSIVE) != 0;}
     bool canRepeat() const{return !(min_ & (_NON_GREEDY | _PROSSESSIVE));}
@@ -114,7 +120,7 @@ public:
 
 class __Group : public __NodeBase
 {
-    static const int INDEX = 0x800000;   //group index flag
+    static const int INDEX = 1 << 16;   //group index flag
     static const size_t MAX_GROUPS = 9;
     __NodeBase * node_;
     size_t mark_;
@@ -150,6 +156,40 @@ public:
     __NodeBase * Optimize();
     void RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const;
     void Debug(std::ostream & out,int lvl) const;
+};
+
+class __CRegxString
+{
+    typedef std::pair<__NodeBase *,int> __Ret;
+    struct __ParseData{
+        __Ends ends_;
+        size_t i_;
+        int ref_;
+        __ParseData():i_(0),ref_(0){}
+    };
+public:
+    __CRegxString();
+    ~__CRegxString(){uninit();}
+    void ParseRegx(const __DZ_STRING & regx);
+    __DZ_STRING Regx() const{return regx_;}
+    const __DZ_STRING & RandString();
+    const __DZ_STRING & LastString() const{return str_;}
+    void Debug(std::ostream & out) const;
+private:
+    void uninit();
+    __Ret processSeq(__ParseData & pdata);
+    __Ret processSlash(bool bNode,__ParseData & pdata);
+    __NodeBase * processSet(__ParseData & pdata);
+    __NodeBase * processGroup(__ParseData & pdata);
+    __Ret processSelect(__NodeBase * node,__ParseData & pdata);
+    __NodeBase * processRepeat(__NodeBase * node,__ParseData & pdata);
+    int processInt(int & result,__ParseData & pdata);
+    bool processRange(int & result,__ParseData & pdata);
+    int ignoreSubexpMarks(__ParseData & pdata);
+    //fields:
+    __DZ_STRING regx_;
+    __DZ_STRING str_;
+    __NodeBase * top_;  //regx tree
 };
 
 #endif

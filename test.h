@@ -1,5 +1,6 @@
 //#include <boost/regex.hpp>
 #include <pcre.h>
+#include <vector>
 
 //void test_boost()
 //{
@@ -79,7 +80,7 @@ static void test_pcre(int c)
         pcre * re = pcre_compile_DZ(regx);
         if (!re)
             continue;
-        regxstr.ParseRegx(regx);
+        regxstr.ParseRegx(regx.c_str());
         for(int i = 0;i < c;++i){
             regxstr.RandString();
             const __DZ_STRING & str = regxstr.LastString();
