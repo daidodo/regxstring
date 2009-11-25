@@ -232,13 +232,17 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Regx String.doc"
-				>
-			</File>
-			<File
 				RelativePath=".\TODO.txt"
 				>
 			</File>
+			<Filter
+				Name="docs"
+				>
+				<File
+					RelativePath=".\docs\Regx String.doc"
+					>
+				</File>
+			</Filter>
 		</Filter>
 	</Files>
 	<Globals>
