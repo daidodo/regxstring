@@ -4,7 +4,6 @@
 
 #include "tools.h"
 #include "regxstring.h"
-#include "regxstring_impl.h"
 
 using namespace std;
 
@@ -57,7 +56,7 @@ static void use(int c)
         in = file;
     }
     while(std::getline(*in,regx)){
-        regxstr.ParseRegx(pre_handle(regx));
+        regxstr.ParseRegx(pre_handle(regx).c_str());
         if(debug)
             regxstr.Debug(cout);
         for(int i = 0;i < c;++i)
