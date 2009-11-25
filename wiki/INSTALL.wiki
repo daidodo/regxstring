@@ -1,6 +1,7 @@
 欢迎使用Regx String，如有任何问题，请联系daidodo@gmail.com
 
 Linux环境安装指南：
+
 1. 解压安装包文件regxstring_x.x.tar.gz：
 	tar -xzvf regxstring_x.x.tar.gz
 2. 进入regxstring目录：
