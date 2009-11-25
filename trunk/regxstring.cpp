@@ -13,13 +13,13 @@ CRegxString::~CRegxString()
         delete impl_;
 }
 
-void CRegxString::ParseRegx(const char * regx)
+void CRegxString::ParseRegx(const char * regx,const Config * config)
 {
     if(!regx)
         return;
     if(!impl_)
         impl_ = new __CRegxString;
-    impl_->ParseRegx(regx);
+    impl_->ParseRegx(regx,config);
 }
 
 const char * CRegxString::Regx() const
