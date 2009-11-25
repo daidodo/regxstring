@@ -1,22 +1,24 @@
 #include <algorithm>
 #include <sstream>
+#include <ctime>
 #include <cassert>
 
 #include "tools.h"
+#include "regxstring.h"
 #include "regxstring_impl.h"
 
 #if _DZ_DEBUG
 #   include <iostream>
 
-static void printRefs(__DZ_OSTRINGSTREAM & oss,const __Refs & refs)
+static void printRefs(__DZ_OSTRINGSTREAM & gdata.oss_,const __Refs & gdata.refs_)
 {
-    for(__Refs::const_iterator i = refs.begin();i != refs.end();++i)
-        std::cout<<"\t"<<oss.str().substr(i->first,i->second);
+    for(__Refs::const_iterator i = gdata.refs_.begin();i != gdata.refs_.end();++i)
+        std::cout<<"\t"<<gdata.oss_.str().substr(i->first,i->second);
 }
 
 #   define _OSS_OUT(msg) {  \
-        std::cout<<msg<<" : "<<oss.str(); \
-        printRefs(oss,refs);    \
+        std::cout<<msg<<" : "<<gdata.oss_.str(); \
+        printRefs(gdata.oss_,gdata.refs_);    \
         std::cout<<std::endl;}
 
 #else
@@ -50,10 +52,11 @@ static void appendNode(__NodeBase *& parent,__NodeBase * node)
         parent->AppendNode(node);
 }
 
-static int inEnds(int ch,const __Ends & ends)
+//struct __ParseData
+int __ParseData::inEnds(int ch) const
 {
     int ret = 1;
-    for(__Ends::const_reverse_iterator i = ends.rbegin();i != ends.rend();++i,++ret){
+    for(__Ends::const_reverse_iterator i = ends_.rbegin();i != ends_.rend();++i,++ret){
         if(ch == *i)
             return ret;
         if(Tools::NeedEnd(*i))
@@ -91,12 +94,12 @@ __Edge::__Edge(int ch)
     : begin_(ch == '^')
 {}
 
-__NodeBase * __Edge::Optimize()
+__NodeBase * __Edge::Optimize(__ParseData & pdata)
 {
     return REP_NULL;
 }
 
-void __Edge::RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const
+void __Edge::RandString(__GenerateData & gdata) const
 {
     _OSS_OUT("__Edge");
 }
@@ -111,14 +114,14 @@ __Text::__Text(int ch)
     : str_(1,ch)
 {}
 
-__NodeBase * __Text::Optimize()
+__NodeBase * __Text::Optimize(__ParseData & pdata)
 {
     return (str_.empty() ? REP_NULL : 0);
 }
 
-void __Text::RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const
+void __Text::RandString(__GenerateData & gdata) const
 {
-    oss<<str_;
+    gdata.oss_<<str_;
     _OSS_OUT("__Text");
 }
 
@@ -137,7 +140,7 @@ __Charset::__Charset(const __DZ_STRING & str,bool include)
     , inc_(include)
 {}
 
-__NodeBase * __Charset::Optimize()
+__NodeBase * __Charset::Optimize(__ParseData & pdata)
 {
     if(!inc_)
         reverse();
@@ -147,10 +150,10 @@ __NodeBase * __Charset::Optimize()
     return 0;
 }
 
-void __Charset::RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const
+void __Charset::RandString(__GenerateData & gdata) const
 {
     assert(inc_ == str_.size());
-    oss<<str_[rand() % inc_];
+    gdata.oss_<<str_[rand() % inc_];
     _OSS_OUT("__Charset");
 }
 
@@ -247,18 +250,18 @@ __Repeat::~__Repeat(){
     Delete(node_);
 }
 
-__NodeBase * __Repeat::Optimize()
+__NodeBase * __Repeat::Optimize(__ParseData & pdata)
 {
     min_ &= _CLEAR_FLAGS;
     max_ &= _CLEAR_FLAGS;
     if(isInfinite()){
-        max_ = min_ + _INF_VAL;
+        max_ = min_ + pdata.config_.repeatInfinite;
         if( max_ > _REPEAT_MAX)
             max_ = _REPEAT_MAX;
     }
     if(!node_ || (min_ > max_) || (!min_ && !max_))
         return REP_NULL;
-    __NodeBase * r = node_->Optimize();
+    __NodeBase * r = node_->Optimize(pdata);
     if(r == REP_NULL)
         return REP_NULL;
     else if(r){
@@ -274,10 +277,10 @@ __NodeBase * __Repeat::Optimize()
     return 0;
 }
 
-void __Repeat::RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const
+void __Repeat::RandString(__GenerateData & gdata) const
 {
     for(int t = min_ + rand() % max_;t > 0;t--)
-        node_->RandString(oss,refs);
+        node_->RandString(gdata);
     _OSS_OUT("__Repeat");
 }
 
@@ -313,13 +316,13 @@ __Seq::~__Seq(){
         Delete(*i);
 }
 
-__NodeBase * __Seq::Optimize()
+__NodeBase * __Seq::Optimize(__ParseData & pdata)
 {
     if(seq_.empty())
         return REP_NULL;
     for(__Con::iterator i = seq_.begin(),e = seq_.end();i != e;++i)
         if(*i){
-            __NodeBase * r = (*i)->Optimize();
+            __NodeBase * r = (*i)->Optimize(pdata);
             if(r){
                 Delete(*i);
                 *i = (r == REP_NULL ? 0 : r);
@@ -336,10 +339,10 @@ __NodeBase * __Seq::Optimize()
     return 0;
 }
 
-void __Seq::RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const
+void __Seq::RandString(__GenerateData & gdata) const
 {
     for(__Con::const_iterator i = seq_.begin(),e = seq_.end();i != e;++i)
-        (*i)->RandString(oss,refs);
+        (*i)->RandString(gdata);
     _OSS_OUT("__Seq");
 }
 
@@ -381,11 +384,11 @@ __Group::~__Group()
     Delete(node_);
 }
 
-__NodeBase * __Group::Optimize()
+__NodeBase * __Group::Optimize(__ParseData & pdata)
 {
     if(!node_ || mark_ == '!')
         return REP_NULL;
-    __NodeBase * r = node_->Optimize();
+    __NodeBase * r = node_->Optimize(pdata);
     if(r == REP_NULL)
         return REP_NULL;
     else if(r){
@@ -405,16 +408,16 @@ __NodeBase * __Group::Optimize()
     return 0;
 }
 
-void __Group::RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const
+void __Group::RandString(__GenerateData & gdata) const
 {
     assert(node_);
     assert(0 <= mark_ && mark_ < MAX_GROUPS);
-    if(mark_ >= refs.size())
-        refs.resize(mark_ + 1);
-    refs.back() = __RefValue(oss.str().size(),__DZ_STRING::npos);
-    node_->RandString(oss,refs);
-    assert(mark_ < refs.size());
-    refs[mark_].second = oss.str().size() - refs[mark_].first;
+    if(mark_ >= gdata.refs_.size())
+        gdata.refs_.resize(mark_ + 1);
+    gdata.refs_.back() = __RefValue(gdata.oss_.str().size(),__DZ_STRING::npos);
+    node_->RandString(gdata);
+    assert(mark_ < gdata.refs_.size());
+    gdata.refs_[mark_].second = gdata.oss_.str().size() - gdata.refs_[mark_].first;
     _OSS_OUT("__Group");
 }
 
@@ -448,13 +451,13 @@ __Select::~__Select()
         Delete(*i);
 }
 
-__NodeBase * __Select::Optimize()
+__NodeBase * __Select::Optimize(__ParseData & pdata)
 {
     if(sel_.empty())
         return REP_NULL;
     for(__Con::iterator i = sel_.begin(),e = sel_.end();i != e;++i)
         if(*i){
-            __NodeBase * r = (*i)->Optimize();
+            __NodeBase * r = (*i)->Optimize(pdata);
             if(r){
                 Delete(*i);
                 *i = (r == REP_NULL ? 0 : r);
@@ -472,10 +475,10 @@ __NodeBase * __Select::Optimize()
     return 0;
 }
 
-void __Select::RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const
+void __Select::RandString(__GenerateData & gdata) const
 {
     if(sz_)
-        sel_[rand() % sz_]->RandString(oss,refs);
+        sel_[rand() % sz_]->RandString(gdata);
     _OSS_OUT("__Select");
 }
 
@@ -500,19 +503,19 @@ __Ref::__Ref(int index)
     : index_(index)
 {}
 
-__NodeBase * __Ref::Optimize()
+__NodeBase * __Ref::Optimize(__ParseData & pdata)
 {
     --index_;
     return 0;
 }
 
-void __Ref::RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const
+void __Ref::RandString(__GenerateData & gdata) const
 {
-    assert(index_ < refs.size());
-    const __RefValue & ref = refs[index_];
-    __DZ_STRING str = oss.str();
+    assert(index_ < gdata.refs_.size());
+    const __RefValue & ref = gdata.refs_[index_];
+    __DZ_STRING str = gdata.oss_.str();
     if(ref.first < str.size())
-        oss<<str.substr(ref.first,ref.second);
+        gdata.oss_<<str.substr(ref.first,ref.second);
     _OSS_OUT("__Ref("<<index_<<")");
 }
 
@@ -526,17 +529,18 @@ __CRegxString::__CRegxString()
     : top_(0)
 {}
 
-void __CRegxString::ParseRegx(const __DZ_STRING & regx)
+void __CRegxString::ParseRegx(const __DZ_STRING & regx,const Config * config)
 {
     uninit();
     regx_ = regx;
     if(regx_.empty())
         return;
-    __ParseData pdata;
+    Config def;
+    __ParseData pdata(config ? *config : def);
     top_ = processSeq(pdata).first;
     if(!top_)
         return;
-    __NodeBase * r = top_->Optimize();
+    __NodeBase * r = top_->Optimize(pdata);
     if(r){
         Delete(top_);
         top_ = (r == __NodeBase::REP_NULL ? 0 : r);
@@ -547,11 +551,13 @@ void __CRegxString::ParseRegx(const __DZ_STRING & regx)
 
 const __DZ_STRING & __CRegxString::RandString()
 {
-    __Refs refs;
-    __DZ_OSTRINGSTREAM oss;
-    if(top_)
-        top_->RandString(oss,refs);
-    str_ = oss.str();
+    str_.clear();
+    if(top_){
+        __DZ_OSTRINGSTREAM oss;
+        __GenerateData gdata(oss);
+        top_->RandString(gdata);
+        str_ = oss.str();
+    }
     return str_;
 }
 
@@ -599,7 +605,7 @@ __CRegxString::__Ret __CRegxString::processSeq(__ParseData & pdata)
             continue;
         }
         appendNode(ret.first,cur);
-        ret.second = inEnds(ch,pdata.ends_);
+        ret.second = pdata.inEnds(ch);
         if(ret.second)
             return ret;
         if(Tools::IsSelect(ch))

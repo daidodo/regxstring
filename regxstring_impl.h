@@ -18,6 +18,29 @@ typedef __DZ_VECTOR(__RefValue)     __Refs;
 
 typedef __DZ_VECTOR(char)           __Ends;
 
+struct __ParseData{
+    __Ends ends_;
+    const struct Config & config_;
+    size_t i_;
+    int ref_;
+    //functions:
+    explicit __ParseData(const Config & config)
+        : config_(config)
+        , i_(0)
+        , ref_(0)
+    {}
+    int inEnds(int ch) const;
+};
+
+struct __GenerateData
+{
+    __Refs refs_;
+    __DZ_OSTRINGSTREAM & oss_;
+    explicit __GenerateData(__DZ_OSTRINGSTREAM & oss)
+        : oss_(oss)
+    {}
+};
+
 struct __NodeBase
 {
     static __NodeBase * const REP_NULL; //replace with NULL(0)
@@ -26,8 +49,8 @@ struct __NodeBase
     __NodeBase(){++ref;}
 #endif
     virtual ~__NodeBase();
-    virtual __NodeBase * Optimize() = 0;
-    virtual void RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const = 0;
+    virtual __NodeBase * Optimize(__ParseData & pdata) = 0;
+    virtual void RandString(__GenerateData & gdata) const = 0;
     virtual void Debug(std::ostream & out,int lvl) const = 0;
     virtual int Repeat(int ch);
     virtual void AppendNode(__NodeBase * node);
@@ -38,8 +61,8 @@ class __Edge : public __NodeBase
     bool begin_;
 public:
     explicit __Edge(int ch);
-    __NodeBase * Optimize();
-    void RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const;
+    __NodeBase * Optimize(__ParseData & pdata);
+    void RandString(__GenerateData & gdata) const;
     void Debug(std::ostream & out,int lvl) const;
 };
 
@@ -49,8 +72,8 @@ class __Text : public __NodeBase
 public:
     //functions
     explicit __Text(int ch);
-    __NodeBase * Optimize();
-    void RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const;
+    __NodeBase * Optimize(__ParseData & pdata);
+    void RandString(__GenerateData & gdata) const;
     void Debug(std::ostream & out,int lvl) const;
     __Text & operator +=(const __Text & other){str_ += other.str_;return *this;}
 };
@@ -63,8 +86,8 @@ public:
     //functions
     __Charset();
     __Charset(const __DZ_STRING & str,bool include);
-    __NodeBase * Optimize();
-    void RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const;
+    __NodeBase * Optimize(__ParseData & pdata);
+    void RandString(__GenerateData & gdata) const;
     void Debug(std::ostream & out,int lvl) const;
     void Exclude();
     void AddChar(int ch);
@@ -81,7 +104,6 @@ struct __Repeat : public __NodeBase
 {
     static const int INFINITE = 1 << 16;
 private:
-    static const int _INF_VAL = 3;
     static const int _REPEAT_MAX = __Repeat::INFINITE - 1;
     static const int _NON_GREEDY = 1 << 17;
     static const int _PROSSESSIVE = 1 << 18;
@@ -93,8 +115,8 @@ public:
     __Repeat(__NodeBase * node,int ch);
     __Repeat(__NodeBase * node,int min,int max);
     ~__Repeat();
-    __NodeBase * Optimize();
-    void RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const;
+    __NodeBase * Optimize(__ParseData & pdata);
+    void RandString(__GenerateData & gdata) const;
     void Debug(std::ostream & out,int lvl) const;
     int Repeat(int ch);
 private:
@@ -112,8 +134,8 @@ public:
     //functions
     explicit __Seq(__NodeBase * node);
     ~__Seq();
-    __NodeBase * Optimize();
-    void RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const;
+    __NodeBase * Optimize(__ParseData & pdata);
+    void RandString(__GenerateData & gdata) const;
     void Debug(std::ostream & out,int lvl) const;
     void AppendNode(__NodeBase * node);
 };
@@ -128,8 +150,8 @@ public:
     //functions
     __Group(__NodeBase * node,int mark);
     ~__Group();
-    __NodeBase * Optimize();
-    void RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const;
+    __NodeBase * Optimize(__ParseData & pdata);
+    void RandString(__GenerateData & gdata) const;
     void Debug(std::ostream & out,int lvl) const;
 };
 
@@ -142,8 +164,8 @@ public:
     //functions
     explicit __Select(__NodeBase * node);
     ~__Select();
-    __NodeBase * Optimize();
-    void RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const;
+    __NodeBase * Optimize(__ParseData & pdata);
+    void RandString(__GenerateData & gdata) const;
     void Debug(std::ostream & out,int lvl) const;
     void AppendNode(__NodeBase * node);
 };
@@ -153,24 +175,18 @@ class __Ref : public __NodeBase
     size_t index_;
 public:
     explicit __Ref(int index);
-    __NodeBase * Optimize();
-    void RandString(__DZ_OSTRINGSTREAM & oss,__Refs & refs) const;
+    __NodeBase * Optimize(__ParseData & pdata);
+    void RandString(__GenerateData & gdata) const;
     void Debug(std::ostream & out,int lvl) const;
 };
 
 class __CRegxString
 {
     typedef std::pair<__NodeBase *,int> __Ret;
-    struct __ParseData{
-        __Ends ends_;
-        size_t i_;
-        int ref_;
-        __ParseData():i_(0),ref_(0){}
-    };
 public:
     __CRegxString();
     ~__CRegxString(){uninit();}
-    void ParseRegx(const __DZ_STRING & regx);
+    void ParseRegx(const __DZ_STRING & regx,const Config * config);
     __DZ_STRING Regx() const{return regx_;}
     const __DZ_STRING & RandString();
     const __DZ_STRING & LastString() const{return str_;}

@@ -48,3 +48,8 @@ sys     0m1.090s
 real    0m26.441s
 user    0m25.080s
 sys     0m1.280s
+
+input samples increased(0m7.588s)
+real    0m15.352s
+user    0m13.680s
+sys     0m1.660s
