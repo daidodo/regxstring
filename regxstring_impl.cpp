@@ -752,7 +752,7 @@ __CRegxString::__Ret __CRegxString::processSeq(__ParseData & pdata)
 __CRegxString::__Ret __CRegxString::processSlash(bool bNode,__ParseData & pdata)
 {
     ++pdata.i_;
-    __Ret ret(0,pdata.i_ < regx_.length() ? Tools::TransSlash(regx_[pdata.i_]) : '\\');
+    __Ret ret((__NodeBase *)0,pdata.i_ < regx_.length() ? Tools::TransSlash(regx_[pdata.i_]) : '\\');
     __Charset * set = 0;
     switch(ret.second){
         case 'd':set = New<__Charset>("0123456789",true);break;
