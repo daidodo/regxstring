@@ -14,9 +14,9 @@ const char * filename;
 static std::string Trim(std::string str){
     size_t i = 0,e = str.length();
     for(;i < e && std::isspace(str[i]);++i);
-    size_t j = e - 1;
-    for(;j > i && std::isspace(str[j]);--j);
-    return (i <= j ? str.substr(i,j + 1 - i) : "");
+    size_t j = e;
+    for(;j > i && std::isspace(str[j - 1]);--j);
+    return (i < j ? str.substr(i,j - i) : "");
 }
 
 static bool ExtractArg(const char * argstr,const char * pattern,const char *& result)
@@ -98,7 +98,7 @@ static void use(int c)
 
 int main(int argc,const char ** argv)
 {
-    int c = 0;
+    int c = 1;
     bool test = false;
     for(int i = 1;i < argc;++i){
         const char * ret = 0;
@@ -107,18 +107,19 @@ int main(int argc,const char ** argv)
             ExtractArg(argv[i],"--help",ret)) && !ret)
         {
             printUsage(ProgramName(argv[0]));
-            return 0;
+            return 1;
         }else if((ExtractArg(argv[i],"-t",ret) || ExtractArg(argv[i],"-test",ret)) && !ret){
             test = true;
         }else if((ExtractArg(argv[i],"-d",ret) || ExtractArg(argv[i],"-debug",ret)) && !ret){
             debug = true;
-        }else if((ExtractArg(argv[i],"-f=",ret) || ExtractArg(argv[i],"-debug",ret)) && ret){
+        }else if(ExtractArg(argv[i],"-f=",ret) && ret){
             filename = ret;
         }else
-            c = atoi(argv[i]);
+            if((c = atoi(argv[i])) <= 0){
+                printUsage(ProgramName(argv[0]));
+                return 1;
+            }
     }
-    if(c < 0)
-        c = 0;
 #ifdef TEST
     if(test)
         test_pcre(c);
