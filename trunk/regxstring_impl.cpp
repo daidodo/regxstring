@@ -2,19 +2,16 @@
 #include <sstream>
 #include <ctime>
 #include <cassert>
-
 #include "regxstring.h"
 #include "regxstring_impl.h"
-
-NAMESAPCE_BEGIN
 
 #if _DZ_DEBUG
 #   include <iostream>
 
-static void printRefs(__DZ_OSTRINGSTREAM & gdata.oss_,const __Refs & gdata.refs_)
+static void printRefs(__DZ_OSTRINGSTREAM & oss,const REGXSTRING_NS::__Refs & refs)
 {
-    for(__Refs::const_iterator i = gdata.refs_.begin();i != gdata.refs_.end();++i)
-        std::cout<<"\t"<<gdata.oss_.str().substr(i->first,i->second);
+    for(REGXSTRING_NS::__Refs::const_iterator i = refs.begin();i != refs.end();++i)
+        std::cout<<"\t"<<oss.str().substr(i->first,i->second);
 }
 
 #   define _OSS_OUT(msg) {  \
@@ -25,6 +22,8 @@ static void printRefs(__DZ_OSTRINGSTREAM & gdata.oss_,const __Refs & gdata.refs_
 #else
 #   define _OSS_OUT(str)
 #endif
+
+NAMESAPCE_BEGIN
 
 // Replacements for new and delete
 template<class T>
