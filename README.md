@@ -31,8 +31,8 @@ $                   Match the end of the line (or before newline at the end)
 .                   Match any character (except newline)
 (pattern)           Grouping
 (?:pattern)         This is for clustering, not capturing; it groups sub-expressions like "()", but doesn't make back-references as "()" does
-(?=pattern)         A zero-width positive look-ahead assertion. For example, \w+(?=\t) matches a word followed by a tab, without including the tab
-(?!pattern)         A zero-width negative look-ahead assertion. For example foo(?!bar) matches any occurrence of "foo" that isn't followed by "bar"
+(?=pattern)         A zero-width positive look-ahead assertion, e.g., \w+(?=\t) matches a word followed by a tab, without including the tab
+(?!pattern)         A zero-width negative look-ahead assertion, e.g., foo(?!bar) matches any occurrence of "foo" that isn't followed by "bar"
 |                   Alternation
 [xyz]               Matches a single character that is contained within the brackets
 [^xyz]              Matches a single character that is not contained within the brackets
@@ -43,12 +43,12 @@ $                   Match the end of the line (or before newline at the end)
 \r                  Return
 \t                  Tab
 \v                  Vertical white space
-\d                  Digits
-\D                  Non-digits
-\s                  Space and tab
-\S                  Non-whites pace characters
-\w                  Alphanumeric characters plus ""
-\W                  Non-word characters
+\d                  Digits, [0-9]
+\D                  Non-digits, [^0-9]
+\s                  Space and tab, [ \t\r\n\f]
+\S                  Non-white space characters, [^ \t\r\n\f]
+\w                  Alphanumeric characters plus '_', [0-9a-zA-Z_]
+\W                  Non-word characters, [^0-9a-zA-Z_]
 \N                  Matches what the Nth marked sub-expression matched, where N is a digit from 1 to 9
 ```
 One more notice, *regxstring* also includes a library that allows you to generate such strings in your C/C++ programs.
