@@ -5,7 +5,7 @@ The idea is simple: Given a regular expression, generate random strings that can
 
 For example, to generate 5 random IP addresses that have all *same* components, we can use this:
 ```
- $ ./regxstr 5 "^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.\1){3}$"
+ $ echo "^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.\1){3}$" | ./regxstr 5
  250.250.250.250
  213.213.213.213
  4.4.4.4
